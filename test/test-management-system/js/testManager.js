@@ -10,18 +10,18 @@ window.runTest = function(testId) {
 };
 
 window.editTest = function(testId) {
-    if (typeof editTest === 'function') {
-        editTest(testId);
+    if (window.testManager && typeof window.testManager.editTest === 'function') {
+        window.testManager.editTest(testId);
     } else {
-        console.warn('editTest function not yet loaded');
+        console.warn('testManager.editTest function not yet loaded');
     }
 };
 
 window.viewDetails = function(testId) {
-    if (typeof viewDetails === 'function') {
-        viewDetails(testId);
+    if (window.testManager && typeof window.testManager.viewDetails === 'function') {
+        window.testManager.viewDetails(testId);
     } else {
-        console.warn('viewDetails function not yet loaded');
+        console.warn('testManager.viewDetails function not yet loaded');
     }
 };
 
@@ -400,10 +400,9 @@ class TestManager {
                     ` : ''}
                 </div>
                 <div class="test-actions">
-                    <button class="btn btn-success" onclick="testManager.markTestPassed('${testCase.id}')">通过</button>
-                    <button class="btn btn-danger" onclick="testManager.markTestFailed('${testCase.id}')">失败</button>
-                    <button class="btn btn-warning" onclick="testManager.markTestPending('${testCase.id}')">待定</button>
-                    <button class="btn btn-primary" onclick="testManager.runSingleTest('${testCase.id}')">执行</button>
+                    <button class="btn btn-success btn-sm" onclick="testManager.runSingleTest('${testCase.id}')">执行测试</button>
+                    <button class="btn btn-primary btn-sm" onclick="testManager.editTest('${testCase.id}')">编辑</button>
+                    <button class="btn btn-secondary btn-sm" onclick="testManager.viewDetails('${testCase.id}')">详情</button>
                 </div>
             </div>
         `;
@@ -459,6 +458,28 @@ class TestManager {
         });
     }
 
+    // 获取当前选中的模块
+    getCurrentModule() {
+        let currentModule = 'all';
+        try {
+            // 尝试从页面标题获取当前模块
+            const titleElement = document.getElementById('current-module-title');
+            if (titleElement) {
+                const title = titleElement.textContent;
+                if (title !== '所有测试用例') {
+                    Object.keys(this.moduleConfigs).forEach(moduleId => {
+                        if (title.includes(this.moduleConfigs[moduleId].moduleName)) {
+                            currentModule = moduleId;
+                        }
+                    });
+                }
+            }
+        } catch (e) {
+            console.log('无法获取当前模块状态，使用默认值');
+        }
+        return currentModule;
+    }
+
     // 设置事件监听器
     setupEventListeners() {
         // 状态筛选
@@ -467,7 +488,7 @@ class TestManager {
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
                 this.currentFilter = e.target.dataset.filter;
-                this.renderTestCases();
+                this.renderTestCases(this.getCurrentModule());
             });
         });
 
@@ -476,7 +497,7 @@ class TestManager {
         if (categorySelect) {
             categorySelect.addEventListener('change', (e) => {
                 this.currentCategory = e.target.value;
-                this.renderTestCases();
+                this.renderTestCases(this.getCurrentModule());
             });
         }
 
@@ -485,7 +506,7 @@ class TestManager {
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
                 this.searchTerm = e.target.value;
-                this.renderTestCases();
+                this.renderTestCases(this.getCurrentModule());
             });
         }
 
@@ -502,55 +523,207 @@ class TestManager {
     }
 
     // 标记测试通过
-    markTestPassed(testId) {
-        const testCase = this.allTestCases.find(tc => tc.id === testId);
-        if (testCase) {
+    async markTestPassed(testId) {
+        const testCase = this.allTestCases.find(tc => tc.id == testId);
+        if (!testCase) {
+            alert('未找到该测试用例');
+            return;
+        }
+
+        try {
+            // 准备API请求数据
+            const updateData = {
+                title: testCase.title,
+                description: testCase.description,
+                module_id: testCase.module_id || testCase.moduleId || testCase.module,
+                priority: testCase.priority,
+                status: 'passed',
+                estimated_time: testCase.estimated_time || '',
+                expected_result: testCase.expected || testCase.expectedResult || '',
+                actual_result: testCase.actualResult || '',
+                executed_by: '手动测试'
+            };
+
+            // 调用API更新数据库
+            const response = await fetch(`/api/test-cases/${testCase.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updateData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || '更新失败');
+            }
+
+            // 更新前端数据
             testCase.status = 'passed';
             testCase.testResult = '✅ 测试通过';
             testCase.testDate = new Date().toLocaleDateString('zh-CN');
             testCase.executedBy = '手动测试';
-            this.renderTestCases();
+            
+            this.renderTestCases(this.getCurrentModule());
             this.updateStats();
+
+        } catch (error) {
+            console.error('标记测试通过失败:', error);
+            alert(`操作失败: ${error.message}`);
         }
     }
 
     // 标记测试失败
-    markTestFailed(testId) {
-        const testCase = this.allTestCases.find(tc => tc.id === testId);
-        if (testCase) {
+    async markTestFailed(testId) {
+        const testCase = this.allTestCases.find(tc => tc.id == testId);
+        if (!testCase) {
+            alert('未找到该测试用例');
+            return;
+        }
+
+        try {
+            // 准备API请求数据
+            const updateData = {
+                title: testCase.title,
+                description: testCase.description,
+                module_id: testCase.module_id || testCase.moduleId || testCase.module,
+                priority: testCase.priority,
+                status: 'failed',
+                estimated_time: testCase.estimated_time || '',
+                expected_result: testCase.expected || testCase.expectedResult || '',
+                actual_result: testCase.actualResult || '',
+                executed_by: '手动测试'
+            };
+
+            // 调用API更新数据库
+            const response = await fetch(`/api/test-cases/${testCase.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updateData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || '更新失败');
+            }
+
+            // 更新前端数据
             testCase.status = 'failed';
             testCase.testResult = '❌ 测试失败';
             testCase.testDate = new Date().toLocaleDateString('zh-CN');
             testCase.executedBy = '手动测试';
-            this.renderTestCases();
+            
+            this.renderTestCases(this.getCurrentModule());
             this.updateStats();
+
+        } catch (error) {
+            console.error('标记测试失败失败:', error);
+            alert(`操作失败: ${error.message}`);
         }
     }
 
     // 标记测试待定
-    markTestPending(testId) {
-        const testCase = this.allTestCases.find(tc => tc.id === testId);
-        if (testCase) {
+    async markTestPending(testId) {
+        const testCase = this.allTestCases.find(tc => tc.id == testId);
+        if (!testCase) {
+            alert('未找到该测试用例');
+            return;
+        }
+
+        try {
+            // 准备API请求数据
+            const updateData = {
+                title: testCase.title,
+                description: testCase.description,
+                module_id: testCase.module_id || testCase.moduleId || testCase.module,
+                priority: testCase.priority,
+                status: 'pending',
+                estimated_time: testCase.estimated_time || '',
+                expected_result: testCase.expected || testCase.expectedResult || '',
+                actual_result: '', // 重置实际结果
+                executed_by: ''
+            };
+
+            // 调用API更新数据库
+            const response = await fetch(`/api/test-cases/${testCase.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updateData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || '更新失败');
+            }
+
+            // 更新前端数据
             testCase.status = 'pending';
             delete testCase.testResult;
             delete testCase.testDate;
             delete testCase.executedBy;
-            this.renderTestCases();
+            testCase.actualResult = ''; // 重置实际结果
+            
+            this.renderTestCases(this.getCurrentModule());
             this.updateStats();
+
+        } catch (error) {
+            console.error('标记测试待定失败:', error);
+            alert(`操作失败: ${error.message}`);
         }
     }
 
     // 执行单个测试
-    runSingleTest(testId) {
-        const testCase = this.allTestCases.find(tc => tc.id === testId);
-        if (testCase) {
-            // 模拟测试执行
+    async runSingleTest(testId) {
+        const testCase = this.allTestCases.find(tc => tc.id == testId);
+        if (!testCase) {
+            alert('未找到该测试用例');
+            return;
+        }
+
+        try {
+            // 准备API请求数据
+            const updateData = {
+                title: testCase.title,
+                description: testCase.description,
+                module_id: testCase.module_id || testCase.moduleId || testCase.module,
+                priority: testCase.priority,
+                status: 'passed',
+                estimated_time: testCase.estimated_time || '',
+                expected_result: testCase.expected || testCase.expectedResult || '',
+                actual_result: testCase.actualResult || '',
+                executed_by: '自动测试'
+            };
+
+            // 调用API更新数据库
+            const response = await fetch(`/api/test-cases/${testCase.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updateData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || '更新失败');
+            }
+
+            // 更新前端数据
             testCase.status = 'passed';
-            testCase.testResult = '🔄 自动化测试执行完成';
+            testCase.testResult = '✅ 测试通过';
             testCase.testDate = new Date().toLocaleDateString('zh-CN');
-            testCase.executedBy = '自动化测试';
-            this.renderTestCases();
+            testCase.executedBy = '自动测试';
+            
+            this.renderTestCases(this.getCurrentModule());
             this.updateStats();
+
+        } catch (error) {
+            console.error('执行测试失败:', error);
+            alert(`操作失败: ${error.message}`);
         }
     }
 
@@ -565,10 +738,352 @@ class TestManager {
                     testCase.executedBy = '自动化测试';
                 }
             });
-            this.renderTestCases();
+            this.renderTestCases(this.getCurrentModule());
             this.updateStats();
             alert('所有测试用例执行完成！');
         }
+    }
+
+    // 编辑测试用例
+    editTest(testId) {
+        // 使用宽松比较来处理字符串和数字类型的 ID
+        const testCase = this.allTestCases.find(tc => tc.id == testId);
+        if (!testCase) {
+            alert('未找到该测试用例');
+            return;
+        }
+
+        this.showEditModal(testCase);
+    }
+
+    // 显示编辑模态框
+    showEditModal(testCase) {
+        // 移除已存在的模态框
+        const existingModal = document.getElementById('edit-test-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // 创建模态框
+        const modal = document.createElement('div');
+        modal.id = 'edit-test-modal';
+        modal.className = 'modal show';
+
+        // 处理测试步骤
+        const stepsText = Array.isArray(testCase.steps) ? testCase.steps.join('\n') : '';
+
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>编辑测试用例</h2>
+                    <span class="close-btn" onclick="this.closest('.modal').remove()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-test-form">
+                        <div class="form-group">
+                            <label for="edit-test-id">测试用例ID:</label>
+                            <input type="text" id="edit-test-id" value="${testCase.id}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-test-title">标题:</label>
+                            <input type="text" id="edit-test-title" value="${testCase.title}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-test-description">描述:</label>
+                            <textarea id="edit-test-description" rows="3" required>${testCase.description}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-test-steps">测试步骤 (每行一个步骤):</label>
+                            <textarea id="edit-test-steps" rows="5" required>${stepsText}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-test-expected">预期结果:</label>
+                            <textarea id="edit-test-expected" rows="3" required>${testCase.expected || testCase.expectedResult || ''}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-test-actual">实际结果:</label>
+                            <textarea id="edit-test-actual" rows="3" placeholder="请输入实际测试结果...">${testCase.actualResult || ''}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-test-priority">优先级:</label>
+                            <select id="edit-test-priority" required>
+                                <option value="high" ${testCase.priority === 'high' ? 'selected' : ''}>高</option>
+                                <option value="medium" ${testCase.priority === 'medium' ? 'selected' : ''}>中</option>
+                                <option value="low" ${testCase.priority === 'low' ? 'selected' : ''}>低</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-test-status">状态:</label>
+                            <select id="edit-test-status" required>
+                                <option value="pending" ${testCase.status === 'pending' ? 'selected' : ''}>待测试</option>
+                                <option value="passed" ${testCase.status === 'passed' ? 'selected' : ''}>已通过</option>
+                                <option value="failed" ${testCase.status === 'failed' ? 'selected' : ''}>已失败</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="testManager.saveTestCase('${testCase.id}')">保存</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // 点击模态框外部关闭
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+
+        // 按 Esc 键关闭
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                modal.remove();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+    }
+
+    // 保存测试用例
+    async saveTestCase(testId) {
+        // 使用宽松比较来处理字符串和数字类型的 ID
+        const testCase = this.allTestCases.find(tc => tc.id == testId);
+        if (!testCase) {
+            alert('未找到该测试用例');
+            return;
+        }
+
+        // 获取表单数据
+        const title = document.getElementById('edit-test-title').value.trim();
+        const description = document.getElementById('edit-test-description').value.trim();
+        const stepsText = document.getElementById('edit-test-steps').value.trim();
+        const expected = document.getElementById('edit-test-expected').value.trim();
+        const actualResult = document.getElementById('edit-test-actual').value.trim();
+        const priority = document.getElementById('edit-test-priority').value;
+        const status = document.getElementById('edit-test-status').value;
+
+        // 验证必填字段
+        if (!title || !description || !stepsText || !expected) {
+            alert('请填写所有必填字段');
+            return;
+        }
+
+        // 保存原有的执行信息
+        const originalTestDate = testCase.testDate;
+        const originalExecutedBy = testCase.executedBy;
+        const originalTestResult = testCase.testResult;
+
+        // 准备API请求数据
+        const updateData = {
+            title: title,
+            description: description,
+            module_id: testCase.module_id || testCase.moduleId || testCase.module,
+            priority: priority,
+            status: status,
+            estimated_time: testCase.estimated_time || '',
+            expected_result: expected,
+            actual_result: actualResult,
+            executed_by: ''
+        };
+
+        // 如果状态改变，更新相关信息
+        if (status === 'passed') {
+            // 如果之前没有执行时间，则设置为当前时间；否则保留原有时间
+            if (!originalTestDate) {
+                updateData.executed_by = '手动测试';
+            } else {
+                updateData.executed_by = originalExecutedBy || '手动测试';
+            }
+        } else if (status === 'failed') {
+            // 如果之前没有执行时间，则设置为当前时间；否则保留原有时间
+            if (!originalTestDate) {
+                updateData.executed_by = '手动测试';
+            } else {
+                updateData.executed_by = originalExecutedBy || '手动测试';
+            }
+        } else if (status === 'pending') {
+            updateData.executed_by = '';
+        }
+
+        try {
+            // 调用API更新数据库
+            const response = await fetch(`/api/test-cases/${testCase.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updateData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || '保存失败');
+            }
+
+            const result = await response.json();
+            console.log('测试用例保存成功:', result);
+
+            // 更新前端数据
+            testCase.title = title;
+            testCase.description = description;
+            testCase.steps = stepsText.split('\n').filter(step => step.trim() !== '');
+            testCase.expected = expected;
+            testCase.expectedResult = expected; // 兼容性
+            testCase.actualResult = actualResult;
+            testCase.priority = priority;
+            testCase.status = status;
+
+            // 如果状态改变，更新相关信息
+            if (status === 'passed') {
+                testCase.testResult = '✅ 手动标记为通过';
+                // 如果之前没有执行时间，则设置为当前时间；否则保留原有时间
+                if (!originalTestDate) {
+                    testCase.testDate = new Date().toLocaleDateString('zh-CN');
+                    testCase.executedBy = '手动测试';
+                } else {
+                    testCase.testDate = originalTestDate;
+                    testCase.executedBy = originalExecutedBy || '手动测试';
+                }
+            } else if (status === 'failed') {
+                testCase.testResult = '❌ 手动标记为失败';
+                // 如果之前没有执行时间，则设置为当前时间；否则保留原有时间
+                if (!originalTestDate) {
+                    testCase.testDate = new Date().toLocaleDateString('zh-CN');
+                    testCase.executedBy = '手动测试';
+                } else {
+                    testCase.testDate = originalTestDate;
+                    testCase.executedBy = originalExecutedBy || '手动测试';
+                }
+            } else if (status === 'pending') {
+                delete testCase.testResult;
+                delete testCase.testDate;
+                delete testCase.executedBy;
+            }
+
+            // 关闭模态框
+            document.getElementById('edit-test-modal').remove();
+
+            // 重新渲染测试用例，保持当前模块状态
+            this.renderTestCases(this.getCurrentModule());
+            this.updateStats();
+
+            alert('测试用例保存成功！');
+
+        } catch (error) {
+            console.error('保存测试用例失败:', error);
+            alert(`保存失败: ${error.message}`);
+        }
+    }
+
+    // 查看测试用例详情
+    viewDetails(testId) {
+        // 使用宽松比较来处理字符串和数字类型的 ID
+        const testCase = this.allTestCases.find(tc => tc.id == testId);
+        if (!testCase) {
+            alert('未找到该测试用例');
+            return;
+        }
+
+        this.showDetailsModal(testCase);
+    }
+
+    // 显示详情模态框
+    showDetailsModal(testCase) {
+        // 移除已存在的模态框
+        const existingModal = document.getElementById('test-details-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // 创建模态框
+        const modal = document.createElement('div');
+        modal.id = 'test-details-modal';
+        modal.className = 'modal show';
+
+        const stepsHtml = Array.isArray(testCase.steps) ? 
+            testCase.steps.map(step => `<li>${step}</li>`).join('') : 
+            '<li>无测试步骤</li>';
+
+        const statusText = {
+            'pending': '待测试',
+            'passed': '已通过', 
+            'failed': '已失败'
+        };
+
+        const priorityText = {
+            'high': '高优先级',
+            'medium': '中优先级',
+            'low': '低优先级'
+        };
+
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>测试用例详情</h2>
+                    <span class="close-btn" onclick="this.closest('.modal').remove()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="detail-section">
+                        <h3>基本信息</h3>
+                        <p><strong>ID:</strong> ${testCase.id}</p>
+                        <p><strong>标题:</strong> ${testCase.title}</p>
+                        <p><strong>状态:</strong> <span class="status-${testCase.status}">${statusText[testCase.status] || testCase.status}</span></p>
+                        <p><strong>优先级:</strong> <span class="priority-${testCase.priority}">${priorityText[testCase.priority] || testCase.priority}</span></p>
+                    </div>
+                    <div class="detail-section">
+                        <h3>描述</h3>
+                        <p>${testCase.description}</p>
+                    </div>
+                    <div class="detail-section">
+                        <h3>测试步骤</h3>
+                        <ol>${stepsHtml}</ol>
+                    </div>
+                    <div class="detail-section">
+                        <h3>预期结果</h3>
+                        <p>${testCase.expected || testCase.expectedResult || '未定义'}</p>
+                    </div>
+                    ${testCase.actualResult ? `
+                        <div class="detail-section">
+                            <h3>实际结果</h3>
+                            <p>${testCase.actualResult}</p>
+                        </div>
+                    ` : ''}
+                    ${testCase.testDate ? `
+                        <div class="detail-section">
+                            <h3>执行信息</h3>
+                            <p><strong>测试日期:</strong> ${testCase.testDate}</p>
+                            <p><strong>执行者:</strong> ${testCase.executedBy || '未知'}</p>
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="testManager.editTest('${testCase.id}'); this.closest('.modal').remove()">编辑</button>
+                    <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">关闭</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // 点击模态框外部关闭
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+
+        // 按 Esc 键关闭
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                modal.remove();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
     }
 
     // 导出测试结果

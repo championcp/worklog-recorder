@@ -167,7 +167,7 @@ class DataTransformer {
 
     // 将后端测试用例数据转换为前端格式
     static transformTestCase(backendTestCase) {
-        return {
+        const transformed = {
             id: backendTestCase.id,
             title: backendTestCase.title,
             description: backendTestCase.description,
@@ -178,10 +178,16 @@ class DataTransformer {
             estimatedTime: backendTestCase.estimated_time,
             steps: backendTestCase.steps || [],
             expectedResult: backendTestCase.expected_result,
-            actualResult: backendTestCase.actual_result,
             testDate: backendTestCase.updated_at ? new Date(backendTestCase.updated_at).toLocaleDateString('zh-CN') : null,
             executedBy: backendTestCase.executed_by || '手动测试'
         };
+
+        // 只有在actual_result有值且不为空时才设置actualResult字段
+        if (backendTestCase.actual_result && backendTestCase.actual_result.trim() !== '') {
+            transformed.actualResult = backendTestCase.actual_result;
+        }
+
+        return transformed;
     }
 
     // 将前端测试用例数据转换为后端格式

@@ -759,7 +759,13 @@ function runSingleTest(testId) {
 
 // 编辑测试用例
 function editTest(testId) {
-    Utils.showNotification('编辑功能开发中...', 'info');
+    // 确保 testManager 可用
+    if (window.testManager && typeof window.testManager.editTest === 'function') {
+        window.testManager.editTest(testId);
+    } else {
+        console.warn('testManager.editTest function not yet loaded');
+        Utils.showNotification('系统正在初始化，请稍后再试', 'info');
+    }
 }
 
 // 查看测试详情
