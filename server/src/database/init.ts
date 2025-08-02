@@ -112,6 +112,15 @@ export async function initDatabase() {
           table.foreign('parent_plan_id').references('id').inTable('plans').onDelete('CASCADE');
         });
         console.log('✅ 计划表创建完成');
+      } else {
+        // 检查并添加缺失的列
+        const hasParentPlanId = await db.schema.hasColumn('plans', 'parent_plan_id');
+        if (!hasParentPlanId) {
+          await db.schema.alterTable('plans', (table) => {
+            table.string('parent_plan_id');
+          });
+          console.log('✅ 添加 parent_plan_id 列到计划表');
+        }
       }
     });
 

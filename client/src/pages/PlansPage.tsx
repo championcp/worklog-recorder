@@ -23,7 +23,7 @@ const PlansPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   // 获取计划列表
-  const { data: plans = [], isError, error } = useQuery({
+  const { data: plans = [], isLoading, isError, error } = useQuery({
     queryKey: ['plans', { type: selectedPlanType, year: selectedYear }],
     queryFn: () => api.getPlans({
       type: selectedPlanType,
@@ -60,128 +60,6 @@ const PlansPage: React.FC = () => {
     estimatedHours: 0,
     dueDate: ''
   });
-
-  // 数据持久化相关常量
-  const STORAGE_KEY = 'work_log_plans';
-
-  // 从localStorage加载数据
-  const loadPlansFromStorage = (): HierarchicalPlan[] => {
-    try {
-      const savedPlans = localStorage.getItem(STORAGE_KEY);
-      if (savedPlans) {
-        const parsedPlans = JSON.parse(savedPlans);
-        // 转换日期字符串回Date对象
-        return parsedPlans.map((plan: any) => ({
-          ...plan,
-          startDate: new Date(plan.startDate),
-          endDate: new Date(plan.endDate),
-          createdAt: new Date(plan.createdAt),
-          updatedAt: new Date(plan.updatedAt),
-          tasks: plan.tasks?.map((task: any) => ({
-            ...task,
-            dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
-            createdAt: new Date(task.createdAt),
-            updatedAt: new Date(task.updatedAt)
-          })) || [],
-          childPlans: plan.childPlans?.map((childPlan: any) => ({
-            ...childPlan,
-            startDate: new Date(childPlan.startDate),
-            endDate: new Date(childPlan.endDate),
-            createdAt: new Date(childPlan.createdAt),
-            updatedAt: new Date(childPlan.updatedAt)
-          })) || []
-        }));
-      }
-    } catch (error) {
-      console.error('加载计划数据失败:', error);
-    }
-    return [];
-  };
-
-  // 保存数据到localStorage
-  const savePlansToStorage = (plansToSave: HierarchicalPlan[]) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(plansToSave));
-    } catch (error) {
-      console.error('保存计划数据失败:', error);
-    }
-  };
-
-  // 初始化数据
-  useEffect(() => {
-    const savedPlans = loadPlansFromStorage();
-    
-    // 如果没有保存的数据，使用默认示例数据
-    if (savedPlans.length === 0) {
-      const mockPlans: HierarchicalPlan[] = [
-        {
-          id: '1',
-          title: '2024年度发展计划',
-          description: '全年技能提升和职业发展规划',
-          type: PlanType.YEARLY,
-          year: 2024,
-          startDate: new Date('2024-01-01'),
-          endDate: new Date('2024-12-31'),
-          tasks: [
-            {
-              id: 'task-1',
-              title: '学习新技术栈',
-              description: '掌握React、TypeScript等前端技术',
-              status: TaskStatus.IN_PROGRESS,
-              priority: TaskPriority.HIGH,
-              estimatedHours: 100,
-              actualHours: 45,
-              dueDate: new Date('2024-06-30'),
-              planId: '1', // 关联到年度计划
-              tags: [],
-              userId: 'user1',
-              createdAt: new Date(),
-              updatedAt: new Date()
-            }
-          ],
-          status: TaskStatus.IN_PROGRESS,
-          progress: 65,
-          userId: 'user1',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          childPlans: [
-            {
-              id: '2',
-              title: '2024年上半年计划',
-              type: PlanType.HALF_YEARLY,
-              year: 2024,
-              startDate: new Date('2024-01-01'),
-              endDate: new Date('2024-06-30'),
-              parentPlanId: '1',
-              tasks: [],
-              status: TaskStatus.COMPLETED,
-              progress: 100,
-              userId: 'user1',
-              createdAt: new Date(),
-              updatedAt: new Date()
-            },
-            {
-              id: '3',
-              title: '2024年下半年计划',
-              type: PlanType.HALF_YEARLY,
-              year: 2024,
-              startDate: new Date('2024-07-01'),
-              endDate: new Date('2024-12-31'),
-              parentPlanId: '1',
-              tasks: [],
-              status: TaskStatus.IN_PROGRESS,
-              progress: 30,
-              userId: 'user1',
-              createdAt: new Date(),
-              updatedAt: new Date()
-            }
-          ]
-        }
-      ];
-      
-      savePlansToStorage(mockPlans);
-    }
-  }, []);
 
 
 
@@ -598,57 +476,77 @@ const PlansPage: React.FC = () => {
 
       {/* 计划内容区域 */}
       <div className="space-y-6">
-        {viewMode === 'list' && (
+        {isLoading ? (
+          <div className="text-center py-12">
+            <div className="text-gray-500">加载中...</div>
+          </div>
+        ) : isError ? (
+          <div className="text-center py-12">
+            <div className="text-red-500 mb-4">
+              加载计划失败: {error?.message || '未知错误'}
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            >
+              重新加载
+            </button>
+          </div>
+        ) : (
           <>
-            {plans.length > 0 ? (
-              plans.map(plan => renderPlanCard(plan))
-            ) : (
-              <div className="text-center py-12">
-                <div className="text-gray-500 mb-4">暂无计划</div>
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                >
-                  创建第一个计划
-                </button>
-              </div>
+            {viewMode === 'list' && (
+              <>
+                {plans.length > 0 ? (
+                  plans.map(plan => renderPlanCard(plan))
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="text-gray-500 mb-4">暂无计划</div>
+                    <button
+                      onClick={() => setShowCreateModal(true)}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                    >
+                      创建第一个计划
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {viewMode === 'hierarchy' && (
+              <WBSHierarchy
+                plans={plans}
+                onCreateSubPlan={() => setShowCreateModal(true)}
+                onEditPlan={(plan) => {
+                  setEditingPlan(plan);
+                  setFormData({
+                    title: plan.title,
+                    description: plan.description || '',
+                    type: plan.type,
+                    startDate: plan.startDate.toISOString().split('T')[0],
+                    endDate: plan.endDate.toISOString().split('T')[0],
+                    parentPlanId: plan.parentPlanId || ''
+                  });
+                  setShowEditModal(true);
+                }}
+                onDeletePlan={deletePlan}
+                onManageTasks={(plan) => {
+                  setSelectedPlan(plan);
+                  setShowTaskModal(true);
+                }}
+              />
+            )}
+
+            {viewMode === 'gantt' && (
+              <GanttChart
+                plans={plans}
+                tasks={[]}
+                onPlanClick={(plan) => {
+                  setSelectedPlan(plan);
+                  setShowTaskModal(true);
+                }}
+              />
             )}
           </>
-        )}
-
-        {viewMode === 'hierarchy' && (
-          <WBSHierarchy
-            plans={plans}
-            onCreateSubPlan={() => setShowCreateModal(true)}
-            onEditPlan={(plan) => {
-              setEditingPlan(plan);
-              setFormData({
-                title: plan.title,
-                description: plan.description || '',
-                type: plan.type,
-                startDate: plan.startDate.toISOString().split('T')[0],
-                endDate: plan.endDate.toISOString().split('T')[0],
-                parentPlanId: plan.parentPlanId || ''
-              });
-              setShowEditModal(true);
-            }}
-            onDeletePlan={deletePlan}
-            onManageTasks={(plan) => {
-              setSelectedPlan(plan);
-              setShowTaskModal(true);
-            }}
-          />
-        )}
-
-        {viewMode === 'gantt' && (
-          <GanttChart
-            plans={plans}
-            tasks={[]}
-            onPlanClick={(plan) => {
-              setSelectedPlan(plan);
-              setShowTaskModal(true);
-            }}
-          />
         )}
       </div>
 
