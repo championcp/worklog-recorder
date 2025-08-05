@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import ProjectManager from '@/components/ProjectManager';
 import WBSTaskTree from '@/components/WBSTaskTree';
-import type { Project } from '@/types/project';
+import TimeEntryForm from '@/components/TimeEntryForm';
+import type { Project, TimeLog } from '@/types/project';
 
 interface User {
   id: number;
@@ -16,8 +17,22 @@ export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [currentView, setCurrentView] = useState<'overview' | 'projects' | 'tasks'>('overview');
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [currentView, setCurrentView] = useState<'overview' | 'projects' | 'tasks' | 'timetracking'>('overview');
   const router = useRouter();
+
+  const fetchProjects = useCallback(async (userId: number) => {
+    try {
+      const response = await fetch('/api/projects');
+      const data = await response.json();
+      
+      if (data.success) {
+        setProjects(data.data.projects || []);
+      }
+    } catch (error) {
+      console.error('获取项目列表失败:', error);
+    }
+  }, []);
 
   const checkAuth = useCallback(async () => {
     try {
@@ -26,6 +41,8 @@ export default function DashboardPage() {
 
       if (data.success) {
         setUser(data.data.user);
+        // 获取用户项目列表
+        await fetchProjects(data.data.user.id);
       } else {
         // 未认证，跳转到登录页
         router.push('/login');
@@ -36,7 +53,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [router, fetchProjects]);
 
   useEffect(() => {
     checkAuth();
@@ -54,6 +71,16 @@ export default function DashboardPage() {
   const handleProjectSelect = (project: Project) => {
     setSelectedProject(project);
     setCurrentView('tasks');
+  };
+
+  const handleTimeLogCreated = (timeLog: TimeLog) => {
+    // 时间记录创建成功的回调
+    console.log('新时间记录已创建:', timeLog);
+  };
+
+  const handleTimeLogUpdated = (timeLog: TimeLog) => {
+    // 时间记录更新成功的回调
+    console.log('时间记录已更新:', timeLog);
   };
 
   if (loading) {
@@ -98,6 +125,16 @@ export default function DashboardPage() {
                 >
                   项目管理
                 </button>
+                <button
+                  onClick={() => setCurrentView('timetracking')}
+                  className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    currentView === 'timetracking'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  时间记录
+                </button>
                 {selectedProject && (
                   <button
                     onClick={() => setCurrentView('tasks')}
@@ -133,6 +170,7 @@ export default function DashboardPage() {
             <DashboardOverview 
               user={user!} 
               onNavigateToProjects={() => setCurrentView('projects')}
+              onNavigateToTimeTracking={() => setCurrentView('timetracking')}
             />
           )}
           
@@ -141,6 +179,22 @@ export default function DashboardPage() {
               userId={user!.id} 
               onProjectSelect={handleProjectSelect}
             />
+          )}
+
+          {currentView === 'timetracking' && (
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">时间记录管理</h2>
+                <p className="text-gray-600 mb-6">记录和管理您的工作时间</p>
+              </div>
+              
+              <TimeEntryForm
+                userId={user!.id}
+                projects={projects}
+                onTimeLogCreated={handleTimeLogCreated}
+                onTimeLogUpdated={handleTimeLogUpdated}
+              />
+            </div>
           )}
           
           {currentView === 'tasks' && selectedProject && (
@@ -164,9 +218,10 @@ export default function DashboardPage() {
 interface DashboardOverviewProps {
   user: User;
   onNavigateToProjects: () => void;
+  onNavigateToTimeTracking: () => void;
 }
 
-function DashboardOverview({ user, onNavigateToProjects }: DashboardOverviewProps) {
+function DashboardOverview({ user, onNavigateToProjects, onNavigateToTimeTracking }: DashboardOverviewProps) {
   return (
     <div className="space-y-6">
       {/* 欢迎区域 */}
@@ -206,7 +261,10 @@ function DashboardOverview({ user, onNavigateToProjects }: DashboardOverviewProp
             <div className="text-sm text-blue-100">创建和管理您的项目</div>
           </button>
           
-          <button className="bg-green-600 hover:bg-green-700 text-white p-6 rounded-lg transition-colors text-left">
+          <button 
+            onClick={onNavigateToTimeTracking}
+            className="bg-green-600 hover:bg-green-700 text-white p-6 rounded-lg transition-colors text-left"
+          >
             <div className="flex items-center mb-2">
               <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -238,24 +296,24 @@ function DashboardOverview({ user, onNavigateToProjects }: DashboardOverviewProp
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-700">项目管理功能</span>
-            <span className="text-sm text-blue-600 font-medium">🔄 开发中</span>
+            <span className="text-sm text-green-600 font-medium">✓ 已完成</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-700">WBS任务管理</span>
-            <span className="text-sm text-gray-500 font-medium">⏳ 计划中</span>
+            <span className="text-sm text-green-600 font-medium">✓ 已完成</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-700">时间记录功能</span>
-            <span className="text-sm text-gray-500 font-medium">⏳ 计划中</span>
+            <span className="text-sm text-green-600 font-medium">✓ 已完成</span>
           </div>
         </div>
         
         <div className="mt-4">
           <div className="bg-gray-200 rounded-full h-2">
-            <div className="bg-blue-600 h-2 rounded-full" style={{ width: '35%' }}></div>
+            <div className="bg-green-600 h-2 rounded-full" style={{ width: '100%' }}></div>
           </div>
           <p className="text-sm text-gray-600 mt-2">
-            总体进度: 35% - 项目管理功能开发中
+            总体进度: 100% - Sprint 3 时间追踪系统开发完成
           </p>
         </div>
       </div>

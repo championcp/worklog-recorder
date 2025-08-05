@@ -9,7 +9,7 @@ import type { WBSTask, WBSTaskTree, CreateWBSTaskInput } from '../../src/types/p
 export const createMockTask = (overrides: Partial<WBSTask> = {}): WBSTask => ({
   id: 1,
   project_id: 1,
-  parent_id: null,
+  parent_id: undefined,
   wbs_code: '1',
   name: 'Mock Task',
   description: 'Mock task description',
@@ -26,7 +26,7 @@ export const createMockTask = (overrides: Partial<WBSTask> = {}): WBSTask => ({
   created_at: '2025-08-04T10:00:00.000Z',
   updated_at: '2025-08-04T10:00:00.000Z',
   sync_version: 1,
-  is_deleted: 0,
+  is_deleted: false,
   ...overrides
 });
 
@@ -200,7 +200,7 @@ export const validateHierarchy = (tasks: WBSTaskTree[]) => {
   };
 
   tasks.forEach(rootTask => {
-    expect(rootTask.parent_id).toBeNull();
+    expect(rootTask.parent_id).toBeUndefined();
     expect(rootTask.wbs_code).toMatch(/^\d+$/);
     validateNode(rootTask, 1);
   });
