@@ -18,6 +18,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedTask, setSelectedTask] = useState<any | null>(null);
   const [currentView, setCurrentView] = useState<'overview' | 'projects' | 'tasks' | 'timetracking'>('overview');
   const router = useRouter();
 
@@ -198,15 +199,43 @@ export default function DashboardPage() {
           )}
           
           {currentView === 'tasks' && selectedProject && (
-            <WBSTaskTree 
-              projectId={selectedProject.id}
-              projectName={selectedProject.name}
-              onBack={() => setCurrentView('projects')}
-              onTaskSelect={(task) => {
-                // 可以在这里添加任务选择的逻辑
-                console.log('Selected task:', task);
-              }}
-            />
+            <div className="space-y-4">
+              {selectedTask && (
+                <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-blue-700">
+                        已选择任务: <span className="font-medium">{selectedTask.name}</span> (WBS: {selectedTask.wbs_code})
+                      </p>
+                      {selectedTask.description && (
+                        <p className="text-xs text-blue-600 mt-1">{selectedTask.description}</p>
+                      )}
+                      <button
+                        onClick={() => setSelectedTask(null)}
+                        className="text-xs text-blue-600 hover:text-blue-800 mt-2 underline"
+                      >
+                        取消选择
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <WBSTaskTree 
+                projectId={selectedProject.id}
+                projectName={selectedProject.name}
+                onBack={() => setCurrentView('projects')}
+                onTaskSelect={(task) => {
+                  setSelectedTask(task);
+                  // 可以在这里添加更多任务选择后的逻辑
+                  console.log('Selected task:', task);
+                }}
+              />
+            </div>
           )}
         </div>
       </div>

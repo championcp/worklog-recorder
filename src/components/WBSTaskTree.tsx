@@ -257,7 +257,7 @@ export default function WBSTaskTreeComponent({ projectId, onTaskSelect, onBack, 
                 key={task.id}
                 task={task}
                 isExpanded={expandedNodes.has(task.id)}
-                onToggleExpanded={() => toggleExpanded(task.id)}
+                onToggleExpanded={toggleExpanded}
                 onCreateChild={(parentTask) => {
                   setParentTaskForCreate(parentTask);
                   setShowCreateForm(true);
@@ -268,6 +268,7 @@ export default function WBSTaskTreeComponent({ projectId, onTaskSelect, onBack, 
                 onDelete={deleteTask}
                 onSelect={onTaskSelect}
                 depth={0}
+                expandedNodes={expandedNodes}
               />
             ))}
           </div>
@@ -303,12 +304,13 @@ export default function WBSTaskTreeComponent({ projectId, onTaskSelect, onBack, 
 interface TaskNodeProps {
   task: WBSTaskTree;
   isExpanded: boolean;
-  onToggleExpanded: () => void;
+  onToggleExpanded: (taskId: number) => void;
   onCreateChild: (parentTask: WBSTask) => void;
   onEdit: (task: WBSTask) => void;
   onDelete: (taskId: number) => void;
   onSelect?: (task: WBSTask) => void;
   depth: number;
+  expandedNodes: Set<number>;
 }
 
 function TaskNode({ 
@@ -319,7 +321,8 @@ function TaskNode({
   onEdit, 
   onDelete, 
   onSelect,
-  depth 
+  depth,
+  expandedNodes
 }: TaskNodeProps) {
   const hasChildren = task.children && task.children.length > 0;
   const canAddChild = task.level < 3; // 最多3级
@@ -352,7 +355,7 @@ function TaskNode({
           {/* 展开折叠按钮 */}
           {hasChildren ? (
             <button
-              onClick={onToggleExpanded}
+              onClick={() => onToggleExpanded(task.id)}
               className="mr-2 p-1 rounded hover:bg-gray-200 transition-colors"
             >
               {isExpanded ? (
@@ -464,13 +467,14 @@ function TaskNode({
             <TaskNode
               key={child.id}
               task={child}
-              isExpanded={false} // 子任务默认不展开，可以根据需要修改
-              onToggleExpanded={() => {}} // 这里需要传递正确的展开状态管理
+              isExpanded={expandedNodes.has(child.id)}
+              onToggleExpanded={onToggleExpanded}
               onCreateChild={onCreateChild}
               onEdit={onEdit}
               onDelete={onDelete}
               onSelect={onSelect}
               depth={depth + 1}
+              expandedNodes={expandedNodes}
             />
           ))}
         </div>
