@@ -1,4 +1,5 @@
-import { DatabaseClient } from '../db/client';
+import { getDatabase } from '../db/client';
+import type Database from 'better-sqlite3';
 import { 
   DashboardData, 
   DashboardDataRequest, 
@@ -12,7 +13,11 @@ import {
 } from '../../types/analytics';
 
 export class AnalyticsService {
-  constructor(private db: DatabaseClient) {}
+  private db: Database.Database;
+
+  constructor(db?: Database.Database) {
+    this.db = db || getDatabase();
+  }
 
   /**
    * 获取仪表板概览数据
@@ -61,16 +66,16 @@ export class AnalyticsService {
     projectParams: number[]
   ) {
     // 项目统计
-    const projectStats = await this.db.get(`
+    const projectStats = this.db.prepare(`
       SELECT 
         COUNT(*) as total_projects,
         COUNT(CASE WHEN status = 'active' THEN 1 END) as active_projects
       FROM projects p
       WHERE p.user_id = ? ${projectFilter}
-    `, [userId, ...projectParams]);
+    `).get([userId, ...projectParams]) as any;
 
     // 任务统计
-    const taskStats = await this.db.get(`
+    const taskStats = this.db.prepare(`
       SELECT 
         COUNT(CASE WHEN t.status = 'completed' THEN 1 END) as completed_tasks,
         COUNT(*) as total_tasks
@@ -80,10 +85,10 @@ export class AnalyticsService {
         AND t.is_deleted = 0
         AND t.created_at BETWEEN ? AND ?
         ${projectFilter}
-    `, [userId, start, end, ...projectParams]);
+    `).get([userId, start, end, ...projectParams]) as any;
 
     // 时间统计
-    const timeStats = await this.db.get(`
+    const timeStats = this.db.prepare(`
       SELECT 
         COALESCE(SUM(tl.duration_seconds), 0) / 3600.0 as total_hours
       FROM time_logs tl
@@ -136,7 +141,7 @@ export class AnalyticsService {
       LIMIT 10
     `;
 
-    const results = await this.db.all(sql, [userId, ...projectParams]);
+    const results = this.db.prepare(sql, [userId, ...projectParams]);
 
     return results.map(row => {
       const progress = row.total_tasks > 0 ? (row.completed_tasks / row.total_tasks) * 100 : 0;
@@ -205,7 +210,7 @@ export class AnalyticsService {
       LIMIT 20
     `;
 
-    const results = await this.db.all(sql, [
+    const results = this.db.prepare(sql, [
       userId, start, end, ...projectParams,
       userId, start, end, ...projectParams
     ]);
@@ -250,7 +255,7 @@ export class AnalyticsService {
       ORDER BY hours DESC
     `;
 
-    const results = await this.db.all(sql, [userId, start, end, ...projectParams]);
+    const results = this.db.prepare(sql, [userId, start, end, ...projectParams]);
     const totalHours = results.reduce((sum, row) => sum + row.hours, 0);
 
     return results.map(row => ({
@@ -325,7 +330,7 @@ export class AnalyticsService {
       ORDER BY date, hour
     `;
 
-    const results = await this.db.all(sql, [userId, start, end, ...projectParams]);
+    const results = this.db.prepare(sql, [userId, start, end, ...projectParams]);
 
     return results.map(row => ({
       date: row.date,
@@ -366,7 +371,7 @@ export class AnalyticsService {
       ORDER BY date
     `;
 
-    const results = await this.db.all(sql, [userId, start, end, ...projectParams]);
+    const results = this.db.prepare(sql, [userId, start, end, ...projectParams]);
 
     return results.map(row => ({
       date: row.date,
@@ -387,7 +392,7 @@ export class AnalyticsService {
     projectParams: number[]
   ): Promise<TimeInsights> {
     // 总工作时长
-    const totalHours = await this.db.get(`
+    const totalHours = this.db.prepare(`
       SELECT SUM(tl.duration_seconds) / 3600.0 as hours
       FROM time_logs tl
       JOIN wbs_tasks t ON tl.task_id = t.id
@@ -396,7 +401,7 @@ export class AnalyticsService {
     `, [userId, start, end, ...projectParams]);
 
     // 工作天数
-    const workDays = await this.db.get(`
+    const workDays = this.db.prepare(`
       SELECT COUNT(DISTINCT DATE(tl.start_time)) as days
       FROM time_logs tl
       JOIN wbs_tasks t ON tl.task_id = t.id
@@ -405,7 +410,7 @@ export class AnalyticsService {
     `, [userId, start, end, ...projectParams]);
 
     // 高峰时段
-    const peakHours = await this.db.all(`
+    const peakHours = this.db.prepare(`
       SELECT 
         printf('%02d:00', CAST(strftime('%H', tl.start_time) AS INTEGER)) as hour,
         SUM(tl.duration_seconds) as total_seconds
@@ -419,7 +424,7 @@ export class AnalyticsService {
     `, [userId, start, end, ...projectParams]);
 
     // 最高效的工作日
-    const productiveDay = await this.db.get(`
+    const productiveDay = this.db.prepare(`
       SELECT 
         CASE CAST(strftime('%w', tl.start_time) AS INTEGER)
           WHEN 0 THEN 'Sunday'
@@ -466,7 +471,7 @@ export class AnalyticsService {
     projectFilter: string, 
     projectParams: number[]
   ): Promise<number> {
-    const result = await this.db.get(`
+    const result = this.db.prepare(`
       SELECT 
         AVG(CASE 
           WHEN t.estimated_hours > 0 

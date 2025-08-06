@@ -244,7 +244,7 @@ export const DashboardBuilder: React.FC<DashboardBuilderProps> = ({
               <Space>
                 <Button
                   type="text"
-                  size="small"
+                 
                   icon={<SettingOutlined />}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -253,7 +253,7 @@ export const DashboardBuilder: React.FC<DashboardBuilderProps> = ({
                 />
                 <Button
                   type="text"
-                  size="small"
+                 
                   danger
                   icon={<DeleteOutlined />}
                   onClick={(e) => {
@@ -265,7 +265,7 @@ export const DashboardBuilder: React.FC<DashboardBuilderProps> = ({
             )}
           </div>
         }
-        size="small"
+       
         style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
         bodyStyle={{ flex: 1, padding: '12px' }}
       >

@@ -116,7 +116,7 @@ export const ProjectProgressWidget: React.FC<ProjectProgressWidgetProps> = ({
   return (
     <div className="project-progress-widget" style={{ height: '100%', overflow: 'auto' }}>
       <List
-        size="small"
+       
         dataSource={data}
         renderItem={(project) => {
           const statusConfig = getStatusConfig(project.status);
@@ -139,7 +139,7 @@ export const ProjectProgressWidget: React.FC<ProjectProgressWidgetProps> = ({
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
                     <Avatar
-                      size="small"
+                     
                       style={{ 
                         backgroundColor: project.color || '#1890ff',
                         marginRight: '8px',
@@ -162,7 +162,7 @@ export const ProjectProgressWidget: React.FC<ProjectProgressWidgetProps> = ({
                     </Text>
                   </div>
 
-                  <Space size="small">
+                  <Space>
                     {showRiskIndicators && (
                       <Tag 
                         color={statusConfig.tag} 
@@ -189,7 +189,7 @@ export const ProjectProgressWidget: React.FC<ProjectProgressWidgetProps> = ({
                 <div style={{ marginBottom: displayMode === 'compact' ? '4px' : '8px' }}>
                   <Progress
                     percent={project.progress}
-                    size="small"
+                   
                     strokeColor={project.color || statusConfig.color}
                     showInfo={false}
                     trailColor="#f5f5f5"

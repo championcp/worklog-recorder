@@ -278,7 +278,7 @@ export const ReportHistoryManager: React.FC = () => {
     {
       title: '报告信息',
       key: 'info',
-      render: (_, record: ReportHistory) => (
+      render: (_: any, record: ReportHistory) => (
         <div>
           <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
             {record.title}
@@ -317,7 +317,7 @@ export const ReportHistoryManager: React.FC = () => {
             {status === 'processing' && record.progress && (
               <Progress 
                 percent={record.progress} 
-                size="small" 
+                
                 style={{ marginTop: '4px' }}
               />
             )}
@@ -339,7 +339,7 @@ export const ReportHistoryManager: React.FC = () => {
       title: '文件信息',
       key: 'fileInfo',
       width: 120,
-      render: (_, record: ReportHistory) => {
+      render: (_: any, record: ReportHistory) => {
         if (record.status !== 'completed') return '-';
         
         const expired = isExpired(record.expiresAt);
@@ -361,13 +361,13 @@ export const ReportHistoryManager: React.FC = () => {
       title: '操作',
       key: 'actions',
       width: 150,
-      render: (_, record: ReportHistory) => (
-        <Space size="small">
+      render: (_: any, record: ReportHistory) => (
+        <Space>
           {record.status === 'completed' && record.downloadUrl && !isExpired(record.expiresAt) && (
             <Tooltip title="下载报告">
               <Button
                 type="text"
-                size="small"
+               
                 icon={<DownloadOutlined />}
                 onClick={() => handleDownload(record)}
               />
@@ -378,7 +378,7 @@ export const ReportHistoryManager: React.FC = () => {
             <Tooltip title="重新生成">
               <Button
                 type="text"
-                size="small"
+               
                 icon={<ReloadOutlined />}
                 onClick={() => handleRetry(record)}
               />
@@ -388,7 +388,7 @@ export const ReportHistoryManager: React.FC = () => {
           <Tooltip title="查看详情">
             <Button
               type="text"
-              size="small"
+             
               icon={<EyeOutlined />}
               onClick={() => {
                 Modal.info({
@@ -421,7 +421,7 @@ export const ReportHistoryManager: React.FC = () => {
           <Tooltip title="删除">
             <Button
               type="text"
-              size="small"
+             
               danger
               icon={<DeleteOutlined />}
               onClick={() => handleDelete(record)}
@@ -536,7 +536,7 @@ export const ReportHistoryManager: React.FC = () => {
             <label style={{ display: 'block', marginBottom: '4px' }}>创建时间:</label>
             <RangePicker
               value={filters.dateRange}
-              onChange={(dates) => setFilters(prev => ({ ...prev, dateRange: dates }))}
+              onChange={(dates) => setFilters(prev => ({ ...prev, dateRange: dates as [dayjs.Dayjs, dayjs.Dayjs] | null }))}
               style={{ width: '100%' }}
             />
           </div>

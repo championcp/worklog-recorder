@@ -151,7 +151,7 @@ export const TimeAnalysisWidget: React.FC<TimeAnalysisWidgetProps> = ({
         <Select
           value={chartType}
           onChange={setChartType}
-          size="small"
+         
           style={{ width: 80 }}
         >
           <Option value="area">面积</Option>

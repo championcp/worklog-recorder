@@ -159,7 +159,7 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = ({
                           {widget.name}
                         </Typography.Title>
                         
-                        <Tag color={getCategoryColor(widget.category)} size="small">
+                        <Tag color={getCategoryColor(widget.category)}>
                           {getCategoryLabel(widget.category)}
                         </Tag>
                       </div>
@@ -190,10 +190,10 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = ({
                         </span>
                         <Space size={8}>
                           {widget.configurable && (
-                            <Tag size="small" color="blue">可配置</Tag>
+                            <Tag color="blue">可配置</Tag>
                           )}
                           {widget.refreshable && (
-                            <Tag size="small" color="green">可刷新</Tag>
+                            <Tag color="green">可刷新</Tag>
                           )}
                         </Space>
                       </div>
@@ -201,7 +201,7 @@ export const WidgetLibrary: React.FC<WidgetLibraryProps> = ({
                       {/* 添加按钮 */}
                       <Button
                         type="primary"
-                        size="small"
+                       
                         icon={<PlusOutlined />}
                         onClick={() => onAddWidget(widget)}
                         style={{ width: '100%' }}

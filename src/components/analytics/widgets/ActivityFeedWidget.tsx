@@ -119,7 +119,7 @@ export const ActivityFeedWidget: React.FC<ActivityFeedWidgetProps> = ({
   return (
     <div className="activity-feed-widget" style={{ height: '100%', overflow: 'auto' }}>
       <List
-        size="small"
+       
         dataSource={data}
         renderItem={(activity) => {
           const activityTag = getActivityTag(activity.type);
@@ -135,7 +135,7 @@ export const ActivityFeedWidget: React.FC<ActivityFeedWidgetProps> = ({
               <List.Item.Meta
                 avatar={
                   <Avatar 
-                    size="small" 
+                    
                     src={activity.avatar}
                     style={{ 
                       backgroundColor: !activity.avatar ? '#1890ff' : undefined 
@@ -157,7 +157,7 @@ export const ActivityFeedWidget: React.FC<ActivityFeedWidgetProps> = ({
                     </span>
                     <Tag 
                       color={activityTag.color}
-                      size="small"
+                     
                       style={{ fontSize: '10px', margin: 0 }}
                     >
                       {activityTag.text}

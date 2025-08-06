@@ -14,7 +14,7 @@ import {
   YAxis,
   CartesianGrid
 } from 'recharts';
-import { TrophyOutlined, TrendingUpOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { TrophyOutlined, RiseOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { TimeDistributionData } from '@/types/analytics';
 import { useAnalytics } from '@/hooks/useAnalytics';
 
@@ -202,7 +202,7 @@ export const EfficiencyVisualization: React.FC<EfficiencyVisualizationProps> = (
             value={chartType}
             onChange={setChartType}
             style={{ width: 120 }}
-            size="small"
+           
           >
             <Option value="pie">饼图</Option>
             <Option value="bar">柱状图</Option>
@@ -279,7 +279,7 @@ export const EfficiencyVisualization: React.FC<EfficiencyVisualizationProps> = (
               <Statistic
                 title={
                   <span>
-                    <TrendingUpOutlined style={{ marginRight: '4px' }} />
+                    <RiseOutlined style={{ marginRight: '4px' }} />
                     完成任务数
                   </span>
                 }

@@ -68,7 +68,7 @@ export const OverviewWidget: React.FC<OverviewWidgetProps> = ({
     <div className="overview-widget">
       <Row gutter={[16, 16]} style={{ height: '100%' }}>
         <Col xs={12} sm={12} md={6} lg={6}>
-          <Card size="small" style={{ height: '100%' }}>
+          <Card style={{ height: '100%' }}>
             <Statistic
               title="项目总数"
               value={data.totalProjects}
@@ -84,7 +84,7 @@ export const OverviewWidget: React.FC<OverviewWidgetProps> = ({
         </Col>
 
         <Col xs={12} sm={12} md={6} lg={6}>
-          <Card size="small" style={{ height: '100%' }}>
+          <Card style={{ height: '100%' }}>
             <Statistic
               title="完成任务"
               value={data.completedTasks}
@@ -95,7 +95,7 @@ export const OverviewWidget: React.FC<OverviewWidgetProps> = ({
         </Col>
 
         <Col xs={12} sm={12} md={6} lg={6}>
-          <Card size="small" style={{ height: '100%' }}>
+          <Card style={{ height: '100%' }}>
             <Statistic
               title="工作时长"
               value={data.totalHours}
@@ -108,7 +108,7 @@ export const OverviewWidget: React.FC<OverviewWidgetProps> = ({
         </Col>
 
         <Col xs={12} sm={12} md={6} lg={6}>
-          <Card size="small" style={{ height: '100%' }}>
+          <Card style={{ height: '100%' }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{ 
                 fontSize: '14px', 

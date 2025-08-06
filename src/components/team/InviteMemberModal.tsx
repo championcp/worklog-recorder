@@ -266,7 +266,7 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
                   <Select
                     value={item.role}
                     onChange={(role) => handleRoleChange(item.id, role)}
-                    size="small"
+                   
                     style={{ width: 100 }}
                   >
                     <Option value="viewer">查看者</Option>
@@ -275,7 +275,7 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
                   
                   <Button
                     type="text"
-                    size="small"
+                   
                     danger
                     icon={<DeleteOutlined />}
                     onClick={() => handleRemoveEmail(item.id)}

@@ -284,6 +284,7 @@ export const DashboardManagement: React.FC = () => {
                   style={{ height: '100%' }}
                   actions={[
                     <Button 
+                      key="view"
                       type="text" 
                       icon={<EyeOutlined />}
                       onClick={() => handleEditDashboard(dashboard)}
@@ -291,6 +292,7 @@ export const DashboardManagement: React.FC = () => {
                       查看
                     </Button>,
                     <Dropdown 
+                      key="more"
                       menu={getActionMenu(dashboard)}
                       trigger={['click']}
                     >

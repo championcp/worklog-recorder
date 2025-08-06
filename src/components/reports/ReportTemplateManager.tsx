@@ -255,11 +255,11 @@ export const ReportTemplateManager: React.FC = () => {
       title: '操作',
       key: 'actions',
       width: 180,
-      render: (_, record: ReportTemplate) => (
-        <Space size="small">
+      render: (_: any, record: ReportTemplate) => (
+        <Space>
           <Button
             type="text"
-            size="small"
+           
             icon={<EyeOutlined />}
             onClick={() => handleEditTemplate(record)}
           >
@@ -268,7 +268,7 @@ export const ReportTemplateManager: React.FC = () => {
           
           <Button
             type="text"
-            size="small"
+           
             icon={<CopyOutlined />}
             onClick={() => handleCopyTemplate(record)}
           >
@@ -279,7 +279,7 @@ export const ReportTemplateManager: React.FC = () => {
             <>
               <Button
                 type="text"
-                size="small"
+               
                 icon={<EditOutlined />}
                 onClick={() => handleEditTemplate(record)}
               >
@@ -294,7 +294,7 @@ export const ReportTemplateManager: React.FC = () => {
               >
                 <Button
                   type="text"
-                  size="small"
+                 
                   danger
                   icon={<DeleteOutlined />}
                 >

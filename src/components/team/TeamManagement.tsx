@@ -268,7 +268,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
     {
       title: '成员信息',
       key: 'member',
-      render: (_, record: TeamMember) => (
+      render: (_: any, record: TeamMember) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Badge dot={record.isOnline} color="green" offset={[-4, 4]}>
             <Avatar 
@@ -313,7 +313,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
       title: '贡献统计',
       key: 'contribution',
       width: 150,
-      render: (_, record: TeamMember) => (
+      render: (_: any, record: TeamMember) => (
         <div style={{ fontSize: '12px' }}>
           <div>任务: {record.tasksCount} 个</div>
           <div>工时: {record.hoursLogged} 小时</div>
@@ -331,7 +331,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
       title: '操作',
       key: 'actions',
       width: 120,
-      render: (_, record: TeamMember) => {
+      render: (_: any, record: TeamMember) => {
         if (record.role === 'owner') {
           return <Tag color="gold">项目所有者</Tag>;
         }
@@ -341,11 +341,11 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
         }
 
         return (
-          <Space size="small">
+          <Space>
             <Tooltip title="更改角色">
               <Button
                 type="text"
-                size="small"
+               
                 icon={<SettingOutlined />}
                 onClick={() => handleChangeRole(record)}
               />
@@ -361,7 +361,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
               <Tooltip title="移除成员">
                 <Button
                   type="text"
-                  size="small"
+                 
                   danger
                   icon={<DeleteOutlined />}
                 />
@@ -422,16 +422,16 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
       title: '操作',
       key: 'actions',
       width: 120,
-      render: (_, record: Invitation) => {
+      render: (_: any, record: Invitation) => {
         if (!canManageMembers) return '-';
         
         return (
-          <Space size="small">
+          <Space>
             {record.status === 'expired' && (
               <Tooltip title="重新发送">
                 <Button
                   type="text"
-                  size="small"
+                 
                   icon={<MailOutlined />}
                   onClick={() => handleResendInvitation(record)}
                 />
@@ -441,7 +441,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
             <Tooltip title="取消邀请">
               <Button
                 type="text"
-                size="small"
+               
                 danger
                 icon={<DeleteOutlined />}
                 onClick={() => handleCancelInvitation(record)}
