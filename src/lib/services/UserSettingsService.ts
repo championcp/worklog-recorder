@@ -142,10 +142,10 @@ export class UserSettingsService {
     };
 
     // 合并用户设置
-    const userSettings = { ...defaultSettings };
+    const userSettings: any = { ...defaultSettings };
     
     rows.forEach(row => {
-      const key = row.setting_key as keyof UserSettings;
+      const key = row.setting_key;
       let value: any = row.setting_value;
       
       // 根据类型转换值
@@ -355,8 +355,8 @@ export class UserSettingsService {
       const stmt = this.db.prepare(insertQuery);
       
       // 为每个通道和分类组合创建记录
-      Object.entries(mergedSettings.channels).forEach(([channelType, enabled]) => {
-        Object.entries(mergedSettings.categories).forEach(([category, categorySettings]) => {
+      Object.entries(mergedSettings.channels || {}).forEach(([channelType, enabled]) => {
+        Object.entries(mergedSettings.categories || {}).forEach(([category, categorySettings]) => {
           const isChannelEnabledForCategory = enabled && 
             categorySettings.enabled && 
             categorySettings.channels.includes(channelType);
@@ -367,12 +367,12 @@ export class UserSettingsService {
             category,
             isChannelEnabledForCategory ? 1 : 0,
             categorySettings.frequency,
-            mergedSettings.schedule.work_hours.start,
-            mergedSettings.schedule.work_hours.end,
-            mergedSettings.schedule.quiet_hours.start,
-            mergedSettings.schedule.quiet_hours.end,
-            mergedSettings.schedule.weekend_mode ? 1 : 0,
-            mergedSettings.schedule.holiday_mode ? 1 : 0
+            mergedSettings.schedule?.work_hours?.start || '09:00',
+            mergedSettings.schedule?.work_hours?.end || '18:00',
+            mergedSettings.schedule?.quiet_hours?.start || '22:00',
+            mergedSettings.schedule?.quiet_hours?.end || '08:00',
+            mergedSettings.schedule?.weekend_mode ? 1 : 0,
+            mergedSettings.schedule?.holiday_mode ? 1 : 0
           );
         });
       });
@@ -406,7 +406,7 @@ export class UserSettingsService {
         SELECT * FROM projects 
         WHERE user_id = ? AND is_deleted = 0
       `;
-      const projectParams = [userId];
+      const projectParams: any[] = [userId];
 
       if (scope.date_range) {
         projectQuery += ` AND created_at >= ? AND created_at <= ?`;
@@ -428,7 +428,7 @@ export class UserSettingsService {
         INNER JOIN projects p ON wt.project_id = p.id
         WHERE p.user_id = ? AND wt.is_deleted = 0
       `;
-      const taskParams = [userId];
+      const taskParams: any[] = [userId];
 
       if (scope.date_range) {
         taskQuery += ` AND wt.created_at >= ? AND wt.created_at <= ?`;
@@ -451,7 +451,7 @@ export class UserSettingsService {
         INNER JOIN projects p ON wt.project_id = p.id
         WHERE p.user_id = ? AND tl.is_deleted = 0
       `;
-      const timeLogParams = [userId];
+      const timeLogParams: any[] = [userId];
 
       if (scope.date_range) {
         timeLogQuery += ` AND tl.created_at >= ? AND tl.created_at <= ?`;

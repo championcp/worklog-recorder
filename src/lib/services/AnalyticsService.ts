@@ -98,7 +98,7 @@ export class AnalyticsService {
         AND tl.is_deleted = 0
         AND tl.start_time BETWEEN ? AND ?
         ${projectFilter}
-    `, [userId, start, end, ...projectParams]);
+    `).get([userId, start, end, ...projectParams]) as any;
 
     // 计算效率评分
     const efficiencyScore = await this.calculateEfficiencyScore(userId, start, end, projectFilter, projectParams);
@@ -141,9 +141,9 @@ export class AnalyticsService {
       LIMIT 10
     `;
 
-    const results = this.db.prepare(sql, [userId, ...projectParams]);
+    const results = this.db.prepare(sql).all([userId, ...projectParams]) as any;
 
-    return results.map(row => {
+    return results.map((row: any) => {
       const progress = row.total_tasks > 0 ? (row.completed_tasks / row.total_tasks) * 100 : 0;
       const status = row.overdue_tasks > 0 ? 'delayed' : 
                     progress < 50 ? 'at_risk' : 'on_track';
@@ -210,12 +210,12 @@ export class AnalyticsService {
       LIMIT 20
     `;
 
-    const results = this.db.prepare(sql, [
+    const results = this.db.prepare(sql).all([
       userId, start, end, ...projectParams,
       userId, start, end, ...projectParams
-    ]);
+    ]) as any;
 
-    return results.map((row, index) => ({
+    return results.map((row: any, index: number) => ({
       id: index + 1,
       type: row.type,
       title: row.title,
@@ -255,10 +255,10 @@ export class AnalyticsService {
       ORDER BY hours DESC
     `;
 
-    const results = this.db.prepare(sql, [userId, start, end, ...projectParams]);
-    const totalHours = results.reduce((sum, row) => sum + row.hours, 0);
+    const results = this.db.prepare(sql).all([userId, start, end, ...projectParams]) as any;
+    const totalHours = results.reduce((sum: number, row: any) => sum + row.hours, 0);
 
-    return results.map(row => ({
+    return results.map((row: any) => ({
       projectId: row.project_id,
       projectName: row.project_name,
       hours: Math.round(row.hours * 10) / 10,
@@ -330,9 +330,9 @@ export class AnalyticsService {
       ORDER BY date, hour
     `;
 
-    const results = this.db.prepare(sql, [userId, start, end, ...projectParams]);
+    const results = this.db.prepare(sql).all([userId, start, end, ...projectParams]) as any;
 
-    return results.map(row => ({
+    return results.map((row: any) => ({
       date: row.date,
       hour: row.hour,
       value: Math.round(row.minutes),
@@ -371,9 +371,9 @@ export class AnalyticsService {
       ORDER BY date
     `;
 
-    const results = this.db.prepare(sql, [userId, start, end, ...projectParams]);
+    const results = this.db.prepare(sql).all([userId, start, end, ...projectParams]) as any;
 
-    return results.map(row => ({
+    return results.map((row: any) => ({
       date: row.date,
       hours: Math.round(row.hours * 10) / 10,
       tasks: row.tasks,
@@ -398,7 +398,7 @@ export class AnalyticsService {
       JOIN wbs_tasks t ON tl.task_id = t.id
       JOIN projects p ON t.project_id = p.id
       WHERE p.user_id = ? AND tl.start_time BETWEEN ? AND ? ${projectFilter}
-    `, [userId, start, end, ...projectParams]);
+    `).get([userId, start, end, ...projectParams]) as any;
 
     // 工作天数
     const workDays = this.db.prepare(`
@@ -407,7 +407,7 @@ export class AnalyticsService {
       JOIN wbs_tasks t ON tl.task_id = t.id
       JOIN projects p ON t.project_id = p.id
       WHERE p.user_id = ? AND tl.start_time BETWEEN ? AND ? ${projectFilter}
-    `, [userId, start, end, ...projectParams]);
+    `).get([userId, start, end, ...projectParams]) as any;
 
     // 高峰时段
     const peakHours = this.db.prepare(`
@@ -421,7 +421,7 @@ export class AnalyticsService {
       GROUP BY CAST(strftime('%H', tl.start_time) AS INTEGER)
       ORDER BY total_seconds DESC
       LIMIT 3
-    `, [userId, start, end, ...projectParams]);
+    `).all([userId, start, end, ...projectParams]) as any;
 
     // 最高效的工作日
     const productiveDay = this.db.prepare(`
@@ -443,7 +443,7 @@ export class AnalyticsService {
       GROUP BY CAST(strftime('%w', tl.start_time) AS INTEGER)
       ORDER BY total_seconds DESC
       LIMIT 1
-    `, [userId, start, end, ...projectParams]);
+    `).get([userId, start, end, ...projectParams]) as any;
 
     const averageDailyHours = workDays?.days > 0 
       ? (totalHours?.hours || 0) / workDays.days 
@@ -454,7 +454,7 @@ export class AnalyticsService {
     return {
       totalHours: Math.round((totalHours?.hours || 0) * 10) / 10,
       averageDailyHours: Math.round(averageDailyHours * 10) / 10,
-      peakHours: peakHours.map(row => row.hour),
+      peakHours: peakHours.map((row: any) => row.hour),
       mostProductiveDay: productiveDay?.day_name || 'Monday',
       efficiencyScore,
       recommendations: this.generateRecommendations(efficiencyScore, averageDailyHours, peakHours.length)
@@ -485,7 +485,7 @@ export class AnalyticsService {
         AND tl.start_time BETWEEN ? AND ? 
         AND t.estimated_hours > 0
         ${projectFilter}
-    `, [userId, start, end, ...projectParams]);
+    `).get([userId, start, end, ...projectParams]) as any;
 
     return Math.round(Math.min(result?.avg_efficiency || 75, 100));
   }

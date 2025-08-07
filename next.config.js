@@ -3,6 +3,8 @@ const nextConfig = {
   images: {
     domains: [],
   },
+  // Transpile antd and @ant-design/icons for compatibility
+  transpilePackages: ['antd', '@ant-design/icons'],
   // SQLite数据库配置
   webpack: (config, { isServer }) => {
     if (isServer) {

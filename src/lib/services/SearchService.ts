@@ -401,7 +401,7 @@ export class SearchService {
     `;
 
     const conditions = ['p.user_id = ?', 'wt.is_deleted = 0', 'p.is_deleted = 0'];
-    const params = [userId];
+    const params: any[] = [userId];
 
     // 添加关键词搜索条件
     if (keywords && keywords.trim()) {
