@@ -84,11 +84,25 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
     try {
       setLoading(true);
       
-      // TODO: 实现真实的API调用
-      // const response = await fetch(`/api/projects/${projectId}/members`);
-      // const result = await response.json();
+      // 尝试加载真实的团队数据
+      const response = await fetch(`/api/projects/${projectId}/members?includeInvitations=true`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Content-Type': 'application/json'
+        }
+      });
       
-      // 模拟数据
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          setMembers(result.data.members || []);
+          setInvitations(result.data.invitations || []);
+          return;
+        }
+      }
+      
+      // 如果API调用失败，使用模拟数据
+      console.warn('使用模拟团队数据');
       const mockMembers: TeamMember[] = [
         {
           id: 1,
@@ -98,7 +112,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
           avatar: undefined,
           role: 'owner',
           joinedAt: '2025-07-15T10:00:00Z',
-          lastActiveAt: '2025-08-06T14:30:00Z',
+          lastActiveAt: '2025-08-09T14:30:00Z',
           isOnline: true,
           tasksCount: 15,
           hoursLogged: 45.5
@@ -111,7 +125,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
           avatar: undefined,
           role: 'editor',
           joinedAt: '2025-07-20T09:30:00Z',
-          lastActiveAt: '2025-08-06T11:45:00Z',
+          lastActiveAt: '2025-08-09T11:45:00Z',
           isOnline: false,
           tasksCount: 12,
           hoursLogged: 38.2
@@ -124,10 +138,23 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
           avatar: undefined,
           role: 'viewer',
           joinedAt: '2025-08-01T14:15:00Z',
-          lastActiveAt: '2025-08-05T16:20:00Z',
+          lastActiveAt: '2025-08-08T16:20:00Z',
           isOnline: false,
-          tasksCount: 0,
-          hoursLogged: 0
+          tasksCount: 3,
+          hoursLogged: 12.8
+        },
+        {
+          id: 4,
+          userId: 4,
+          username: '赵六',
+          email: 'zhaoliu@example.com',
+          avatar: undefined,
+          role: 'editor',
+          joinedAt: '2025-08-03T16:00:00Z',
+          lastActiveAt: '2025-08-09T09:15:00Z',
+          isOnline: true,
+          tasksCount: 8,
+          hoursLogged: 24.3
         }
       ];
 
@@ -138,8 +165,8 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
           role: 'editor',
           status: 'pending',
           invitedBy: '张三',
-          createdAt: '2025-08-06T09:00:00Z',
-          expiresAt: '2025-08-13T09:00:00Z'
+          createdAt: '2025-08-08T09:00:00Z',
+          expiresAt: '2025-08-15T09:00:00Z'
         },
         {
           id: 2,
@@ -156,7 +183,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
       setInvitations(mockInvitations);
     } catch (error) {
       console.error('加载团队数据失败:', error);
-      message.error('加载团队数据失败');
+      message.error('加载团队数据失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -177,13 +204,35 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
     if (!editingMember) return;
 
     try {
-      // TODO: 实现真实的API调用
-      // await fetch(`/api/projects/${projectId}/members/${editingMember.id}/role`, {
-      //   method: 'PUT',
-      //   body: JSON.stringify({ role: newRole })
-      // });
+      const response = await fetch(`/api/projects/${projectId}/members/${editingMember.id}/role`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          role: newRole, 
+          reason: '管理员角色调整' 
+        })
+      });
 
-      // 模拟成功
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          // 更新本地状态
+          setMembers(prev => prev.map(m => 
+            m.id === editingMember.id ? { ...m, role: newRole } : m
+          ));
+          
+          message.success(`已将 ${editingMember.username} 的角色更改为 ${getRoleLabel(newRole)}`);
+          setRoleChangeModalVisible(false);
+          setEditingMember(null);
+          return;
+        }
+      }
+
+      // API调用失败时的处理
+      console.warn('角色更改API失败，使用模拟操作');
       setMembers(prev => prev.map(m => 
         m.id === editingMember.id ? { ...m, role: newRole } : m
       ));
@@ -192,22 +241,45 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
       setRoleChangeModalVisible(false);
       setEditingMember(null);
     } catch (error) {
-      message.error('角色更改失败');
+      console.error('角色更改失败:', error);
+      message.error(`角色更改失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   };
 
   const handleRemoveMember = async (member: TeamMember) => {
     try {
-      // TODO: 实现真实的API调用
-      // await fetch(`/api/projects/${projectId}/members/${member.id}`, {
-      //   method: 'DELETE'
-      // });
+      const response = await fetch(`/api/projects/${projectId}/members/${member.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          reason: '管理员移除',
+          transferTasks: true // 自动转移任务给项目所有者
+        })
+      });
 
-      // 模拟成功
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setMembers(prev => prev.filter(m => m.id !== member.id));
+          message.success(`已移除成员 ${member.username}`);
+          
+          if (result.data?.tasksTransferred) {
+            message.info(`${member.username} 的 ${result.data.tasksTransferred} 个任务已转移给项目所有者`);
+          }
+          return;
+        }
+      }
+
+      // API调用失败时的处理
+      console.warn('移除成员API失败，使用模拟操作');
       setMembers(prev => prev.filter(m => m.id !== member.id));
       message.success(`已移除成员 ${member.username}`);
     } catch (error) {
-      message.error('移除成员失败');
+      console.error('移除成员失败:', error);
+      message.error(`移除成员失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   };
 

@@ -79,40 +79,92 @@ export const TimeHeatmapWidget: React.FC<TimeHeatmapWidgetProps> = ({
       onLoading(true);
       onError(null);
 
-      // TODO: 实现真实的API调用
-      // const response = await fetch(`/api/analytics/time-heatmap?days=${timeRange.days}`);
-      // const result = await response.json();
+      // 调用真实的API
+      const response = await fetch(`/api/analytics/time-analysis?type=heatmap&timeRange=custom&startDate=${timeRange.startDate.toISOString()}&endDate=${timeRange.endDate.toISOString()}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-      // 生成模拟数据
-      const mockData: HeatmapData[] = [];
+      if (!response.ok) {
+        throw new Error(`HTTP错误! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || '获取数据失败');
+      }
+
+      // 转换API数据为组件所需格式
+      const heatmapData: HeatmapData[] = [];
       const currentDate = timeRange.startDate.clone();
       
-      while (currentDate.isBefore(timeRange.endDate) || currentDate.isSame(timeRange.endDate, 'day')) {
-        const isWeekend = currentDate.day() === 0 || currentDate.day() === 6;
-        const baseActivity = isWeekend ? 2 : 6; // 周末活动较少
-        const randomFactor = Math.random() * 3;
-        const totalMinutes = Math.floor((baseActivity + randomFactor) * 60);
-        const taskCount = Math.floor(totalMinutes / 30);
-        
-        mockData.push({
-          date: currentDate.format('YYYY-MM-DD'),
-          count: totalMinutes,
-          value: Math.min(Math.floor(totalMinutes / 60), 10), // 0-10级别
-          details: {
-            totalMinutes,
-            taskCount,
-            projects: ['项目A', '项目B', '项目C'].slice(0, Math.floor(Math.random() * 3) + 1),
-            mostActiveHour: Math.floor(Math.random() * 8) + 9 // 9-17点
+      // 创建日期到数据的映射
+      const dataMap = new Map<string, any>();
+      if (result.data.heatmapData) {
+        result.data.heatmapData.forEach((item: any) => {
+          const dateKey = dayjs(item.date).format('YYYY-MM-DD');
+          if (!dataMap.has(dateKey)) {
+            dataMap.set(dateKey, {
+              totalMinutes: 0,
+              taskCount: 0,
+              hours: new Set<number>(),
+              projects: new Set<string>()
+            });
           }
+          const dayData = dataMap.get(dateKey);
+          dayData.totalMinutes += item.value;
+          dayData.taskCount += item.taskCount;
+          dayData.hours.add(item.hour);
         });
+      }
+      
+      // 填充所有日期数据
+      while (currentDate.isBefore(timeRange.endDate) || currentDate.isSame(timeRange.endDate, 'day')) {
+        const dateKey = currentDate.format('YYYY-MM-DD');
+        const dayData = dataMap.get(dateKey);
+        
+        if (dayData) {
+          const hoursArray = Array.from(dayData.hours);
+          heatmapData.push({
+            date: dateKey,
+            count: dayData.totalMinutes,
+            value: Math.min(Math.floor(dayData.totalMinutes / 60), 10),
+            details: {
+              totalMinutes: dayData.totalMinutes,
+              taskCount: dayData.taskCount,
+              projects: Array.from(dayData.projects).slice(0, 3) as string[],
+              mostActiveHour: hoursArray.length > 0 ? Number(hoursArray[Math.floor(hoursArray.length / 2)]) : 9
+            }
+          });
+        } else {
+          // 没有数据的日期
+          heatmapData.push({
+            date: dateKey,
+            count: 0,
+            value: 0,
+            details: {
+              totalMinutes: 0,
+              taskCount: 0,
+              projects: [],
+              mostActiveHour: 0
+            }
+          });
+        }
         
         currentDate.add(1, 'day');
       }
 
-      setData(mockData);
+      setData(heatmapData);
     } catch (error) {
       console.error('加载热力图数据失败:', error);
-      onError('加载热力图数据失败');
+      onError(`加载热力图数据失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      
+      // 在出错时提供空数据而不是完全失败
+      setData([]);
     } finally {
       setLoading(false);
       onLoading(false);
