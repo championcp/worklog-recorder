@@ -104,18 +104,18 @@ export default function HomePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <h3 className="text-lg font-semibold text-green-800">
-                用户认证系统已完成
+                核心功能已完成
               </h3>
             </div>
             <p className="text-green-700">
-              用户注册、登录、登出功能已实现并可正常使用，您可以开始体验系统功能
+              认证系统、项目管理、WBS任务管理、时间记录和分类管理功能已实现并可正常使用
             </p>
             <div className="mt-4">
               <div className="bg-green-200 rounded-full h-2">
-                <div className="bg-green-600 h-2 rounded-full" style={{ width: '60%' }}></div>
+                <div className="bg-green-600 h-2 rounded-full" style={{ width: '80%' }}></div>
               </div>
               <p className="text-sm text-green-600 mt-2">
-                开发进度: 60% - 用户认证系统完成
+                开发进度: 80% - Sprint 1-4完成，Sprint 5开发中
               </p>
             </div>
           </div>

@@ -6,6 +6,9 @@ import ProjectManager from '@/components/ProjectManager';
 import WBSTaskTree from '@/components/WBSTaskTree';
 import TimeEntryForm from '@/components/TimeEntryForm';
 import CategoryManager from '@/components/categories/CategoryManager';
+import DashboardManagementPage from '@/components/pages/DashboardManagementPage';
+import ReportsPage from '@/components/pages/ReportsPageComponent';
+import TeamCollaborationPage from '@/components/pages/TeamCollaborationPageComponent';
 import type { Project, TimeLog } from '@/types/project';
 
 interface User {
@@ -20,7 +23,7 @@ export default function DashboardPage() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
-  const [currentView, setCurrentView] = useState<'overview' | 'projects' | 'tasks' | 'timetracking' | 'categories'>('overview');
+  const [currentView, setCurrentView] = useState<'overview' | 'projects' | 'tasks' | 'timetracking' | 'categories' | 'analytics' | 'reports' | 'team'>('overview');
   const router = useRouter();
 
   const fetchProjects = useCallback(async (userId: number) => {
@@ -147,6 +150,36 @@ export default function DashboardPage() {
                 >
                   时间记录
                 </button>
+                <button
+                  onClick={() => setCurrentView('analytics')}
+                  className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    currentView === 'analytics'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  数据分析
+                </button>
+                <button
+                  onClick={() => setCurrentView('reports')}
+                  className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    currentView === 'reports'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  报告中心
+                </button>
+                <button
+                  onClick={() => setCurrentView('team')}
+                  className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    currentView === 'team'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  团队协作
+                </button>
                 {selectedProject && (
                   <button
                     onClick={() => setCurrentView('tasks')}
@@ -184,6 +217,9 @@ export default function DashboardPage() {
               onNavigateToProjects={() => setCurrentView('projects')}
               onNavigateToTimeTracking={() => setCurrentView('timetracking')}
               onNavigateToCategories={() => setCurrentView('categories')}
+              onNavigateToAnalytics={() => setCurrentView('analytics')}
+              onNavigateToReports={() => setCurrentView('reports')}
+              onNavigateToTeam={() => setCurrentView('team')}
             />
           )}
           
@@ -260,6 +296,39 @@ export default function DashboardPage() {
               />
             </div>
           )}
+          
+          {currentView === 'analytics' && (
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">数据分析中心</h2>
+                <p className="text-gray-600 mb-6">通过可视化图表和数据分析，深入了解您的工作效率和时间分配</p>
+              </div>
+              
+              <DashboardManagementPage />
+            </div>
+          )}
+
+          {currentView === 'reports' && (
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">报告中心</h2>
+                <p className="text-gray-600 mb-6">生成、管理和导出各类项目报告和统计数据</p>
+              </div>
+              
+              <ReportsPage />
+            </div>
+          )}
+
+          {currentView === 'team' && (
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">团队协作</h2>
+                <p className="text-gray-600 mb-6">管理项目团队成员，促进团队协作效率</p>
+              </div>
+              
+              <TeamCollaborationPage />
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -272,9 +341,12 @@ interface DashboardOverviewProps {
   onNavigateToProjects: () => void;
   onNavigateToTimeTracking: () => void;
   onNavigateToCategories: () => void;
+  onNavigateToAnalytics: () => void;
+  onNavigateToReports: () => void;
+  onNavigateToTeam: () => void;
 }
 
-function DashboardOverview({ user, onNavigateToProjects, onNavigateToTimeTracking, onNavigateToCategories }: DashboardOverviewProps) {
+function DashboardOverview({ user, onNavigateToProjects, onNavigateToTimeTracking, onNavigateToCategories, onNavigateToAnalytics, onNavigateToReports, onNavigateToTeam }: DashboardOverviewProps) {
   return (
     <div className="space-y-6">
       {/* 欢迎区域 */}
@@ -300,7 +372,7 @@ function DashboardOverview({ user, onNavigateToProjects, onNavigateToTimeTrackin
       {/* 快速操作 */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-medium text-gray-900 mb-4">快速操作</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <button 
             onClick={onNavigateToProjects}
             className="bg-blue-600 hover:bg-blue-700 text-white p-6 rounded-lg transition-colors text-left"
@@ -340,14 +412,43 @@ function DashboardOverview({ user, onNavigateToProjects, onNavigateToTimeTrackin
             <div className="text-sm text-green-100">记录和分析工作时间</div>
           </button>
           
-          <button className="bg-purple-600 hover:bg-purple-700 text-white p-6 rounded-lg transition-colors text-left">
+          <button 
+            onClick={onNavigateToAnalytics}
+            className="bg-purple-600 hover:bg-purple-700 text-white p-6 rounded-lg transition-colors text-left"
+          >
+            <div className="flex items-center mb-2">
+              <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <div className="text-base font-medium">数据分析</div>
+            </div>
+            <div className="text-sm text-purple-100">查看工作效率统计</div>
+          </button>
+          
+          <button 
+            onClick={onNavigateToReports}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white p-6 rounded-lg transition-colors text-left"
+          >
             <div className="flex items-center mb-2">
               <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <div className="text-base font-medium">生成报告</div>
+              <div className="text-base font-medium">报告中心</div>
             </div>
-            <div className="text-sm text-purple-100">导出工作报告和统计</div>
+            <div className="text-sm text-indigo-100">生成和管理报告</div>
+          </button>
+          
+          <button 
+            onClick={onNavigateToTeam}
+            className="bg-teal-600 hover:bg-teal-700 text-white p-6 rounded-lg transition-colors text-left"
+          >
+            <div className="flex items-center mb-2">
+              <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <div className="text-base font-medium">团队协作</div>
+            </div>
+            <div className="text-sm text-teal-100">管理团队成员</div>
           </button>
         </div>
       </div>
@@ -374,24 +475,28 @@ function DashboardOverview({ user, onNavigateToProjects, onNavigateToTimeTrackin
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-700">分类管理系统</span>
-            <span className="text-sm text-blue-600 font-medium">🚀 开发中</span>
+            <span className="text-sm text-green-600 font-medium">✓ 已完成</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">标签管理系统</span>
-            <span className="text-sm text-gray-400 font-medium">⏳ 待开发</span>
+            <span className="text-sm font-medium text-gray-700">数据分析系统</span>
+            <span className="text-sm text-green-600 font-medium">✓ 已完成</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">全局搜索功能</span>
-            <span className="text-sm text-gray-400 font-medium">⏳ 待开发</span>
+            <span className="text-sm font-medium text-gray-700">报告生成功能</span>
+            <span className="text-sm text-green-600 font-medium">✓ 已完成</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-700">团队协作功能</span>
+            <span className="text-sm text-green-600 font-medium">✓ 已完成</span>
           </div>
         </div>
         
         <div className="mt-4">
           <div className="bg-gray-200 rounded-full h-2">
-            <div className="bg-gradient-to-r from-green-600 to-blue-600 h-2 rounded-full" style={{ width: '70%' }}></div>
+            <div className="bg-gradient-to-r from-green-600 to-green-500 h-2 rounded-full" style={{ width: '100%' }}></div>
           </div>
           <p className="text-sm text-gray-600 mt-2">
-            总体进度: 70% - Sprint 4 分类搜索和用户设置系统开发中
+            总体进度: 100% - 所有Sprint已完成，系统功能齐全
           </p>
         </div>
       </div>

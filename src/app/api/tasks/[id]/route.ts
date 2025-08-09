@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/auth/AuthService';
 import { WBSTaskService } from '@/lib/services/WBSTaskService';
+
+// 强制动态渲染
+export const dynamic = 'force-dynamic';
 import type { ProjectApiResponse, UpdateWBSTaskInput } from '@/types/project';
 
 const authService = new AuthService();

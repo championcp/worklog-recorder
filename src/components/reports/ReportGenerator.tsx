@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Card, 
   Form, 
@@ -80,6 +80,43 @@ export const ReportGenerator: React.FC = () => {
   const [generatingTask, setGeneratingTask] = useState<ReportTask | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // 检查任务进度的函数
+  const checkTaskProgress = useCallback(async () => {
+    if (!generatingTask) return;
+
+    try {
+      // TODO: 实现真实的API调用
+      // const response = await fetch(`/api/reports/tasks/${generatingTask.taskId}`);
+      // const result = await response.json();
+      
+      // 模拟进度更新
+      const progress = Math.min(generatingTask.progress + Math.random() * 20, 100);
+      
+      if (progress >= 100) {
+        setGeneratingTask({
+          ...generatingTask,
+          status: 'completed',
+          progress: 100,
+          downloadUrl: '/api/reports/download/mock-report.pdf',
+          fileSize: 1024 * 1024 * 2.5 // 2.5MB
+        });
+        message.success('报告生成成功');
+      } else {
+        setGeneratingTask({
+          ...generatingTask,
+          progress
+        });
+      }
+    } catch (error) {
+      console.error('检查任务进度失败:', error);
+      setGeneratingTask({
+        ...generatingTask,
+        status: 'failed',
+        errorMessage: '生成失败，请重试'
+      });
+    }
+  }, [generatingTask]);
+
   useEffect(() => {
     loadTemplates();
     loadProjects();
@@ -91,7 +128,7 @@ export const ReportGenerator: React.FC = () => {
       const interval = setInterval(checkTaskProgress, 2000);
       return () => clearInterval(interval);
     }
-  }, [generatingTask]);
+  }, [generatingTask, checkTaskProgress]);
 
   const loadTemplates = async () => {
     try {
@@ -133,42 +170,6 @@ export const ReportGenerator: React.FC = () => {
       setProjects(mockProjects);
     } catch (error) {
       console.error('加载项目失败:', error);
-    }
-  };
-
-  const checkTaskProgress = async () => {
-    if (!generatingTask) return;
-
-    try {
-      // TODO: 实现真实的API调用
-      // const response = await fetch(`/api/reports/tasks/${generatingTask.taskId}`);
-      // const result = await response.json();
-      
-      // 模拟进度更新
-      const progress = Math.min(generatingTask.progress + Math.random() * 20, 100);
-      
-      if (progress >= 100) {
-        setGeneratingTask({
-          ...generatingTask,
-          status: 'completed',
-          progress: 100,
-          downloadUrl: '/api/reports/download/mock-report.pdf',
-          fileSize: 1024 * 1024 * 2.5 // 2.5MB
-        });
-        message.success('报告生成成功');
-      } else {
-        setGeneratingTask({
-          ...generatingTask,
-          progress
-        });
-      }
-    } catch (error) {
-      console.error('检查任务进度失败:', error);
-      setGeneratingTask({
-        ...generatingTask,
-        status: 'failed',
-        errorMessage: '生成失败，请重试'
-      });
     }
   };
 

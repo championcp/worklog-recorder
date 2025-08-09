@@ -3,6 +3,9 @@ import { AuthService } from '@/lib/auth/AuthService';
 import { TagService } from '@/lib/services/TagService';
 import type { CreateTagInput } from '@/lib/services/TagService';
 
+// 强制动态渲染
+export const dynamic = 'force-dynamic';
+
 const authService = new AuthService();
 const tagService = new TagService();
 

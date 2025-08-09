@@ -3,6 +3,9 @@ import { AuthService } from '@/lib/auth/AuthService';
 import { UserSettingsService } from '@/lib/services/UserSettingsService';
 import type { ExportConfig } from '@/lib/services/UserSettingsService';
 
+// 强制动态渲染
+export const dynamic = 'force-dynamic';
+
 const authService = new AuthService();
 const userSettingsService = new UserSettingsService();
 

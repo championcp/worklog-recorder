@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Card, Select, Row, Col, Statistic, Progress, Typography } from 'antd';
 import { 
   RadialBarChart, 
@@ -40,11 +40,7 @@ export const EfficiencyVisualization: React.FC<EfficiencyVisualizationProps> = (
   const [loading, setLoading] = useState(false);
   const [chartType, setChartType] = useState<'radial' | 'pie' | 'bar'>('pie');
 
-  useEffect(() => {
-    loadData();
-  }, [projectId, timeRange]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -64,7 +60,11 @@ export const EfficiencyVisualization: React.FC<EfficiencyVisualizationProps> = (
     } finally {
       setLoading(false);
     }
-  };
+  }, [getDashboardData, timeRange, projectId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // 为饼图准备颜色
   const COLORS = ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#13c2c2', '#eb2f96'];

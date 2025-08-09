@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/auth/AuthService';
 import { SearchService } from '@/lib/services/SearchService';
 
+// 强制动态渲染
+export const dynamic = 'force-dynamic';
+
 const authService = new AuthService();
 const searchService = new SearchService();
 

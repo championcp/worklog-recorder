@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { Card, Select, DatePicker, Row, Col, Typography, Statistic, Alert, Space } from 'antd';
 import { 
   LineChart, 
@@ -38,11 +38,7 @@ export const TimeAnalysisChart: React.FC<TimeAnalysisChartProps> = ({
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter' | 'custom'>('month');
   const [customRange, setCustomRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
 
-  useEffect(() => {
-    loadAnalysisData();
-  }, [analysisType, timeRange, customRange, projectId]);
-
-  const loadAnalysisData = async () => {
+  const loadAnalysisData = useCallback(async () => {
     try {
       const params = {
         type: analysisType,
@@ -59,7 +55,11 @@ export const TimeAnalysisChart: React.FC<TimeAnalysisChartProps> = ({
     } catch (err) {
       console.error('加载时间分析数据失败:', err);
     }
-  };
+  }, [analysisType, timeRange, customRange, projectId, getTimeAnalysisData]);
+
+  useEffect(() => {
+    loadAnalysisData();
+  }, [loadAnalysisData]);
 
   // 处理趋势图数据
   const trendChartData = useMemo(() => {

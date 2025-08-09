@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Select, Space, Alert } from 'antd';
 import { 
   LineChart, 
@@ -34,11 +34,7 @@ export const TimeAnalysisWidget: React.FC<TimeAnalysisWidgetProps> = ({
   const [data, setData] = useState<TimeAnalysisData | null>(null);
   const [chartType, setChartType] = useState<'line' | 'area'>('area');
 
-  useEffect(() => {
-    loadData();
-  }, [refreshKey]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       onLoading(true);
       onError(null);
@@ -56,7 +52,11 @@ export const TimeAnalysisWidget: React.FC<TimeAnalysisWidgetProps> = ({
     } finally {
       onLoading(false);
     }
-  };
+  }, [getTimeAnalysisData, config.filters?.timeRange, config.filters?.projectIds, onLoading, onError]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData, refreshKey]);
 
   // 处理图表数据
   const chartData = data?.trendData?.map(point => ({

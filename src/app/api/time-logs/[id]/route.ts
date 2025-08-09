@@ -3,6 +3,9 @@ import { AuthService } from '@/lib/auth/AuthService';
 import { TimeLogService } from '@/lib/services/TimeLogService';
 import type { ProjectApiResponse, UpdateTimeLogInput } from '@/types/project';
 
+// 强制动态渲染
+export const dynamic = 'force-dynamic';
+
 const authService = new AuthService();
 const timeLogService = new TimeLogService();
 

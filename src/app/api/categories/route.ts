@@ -3,6 +3,9 @@ import { AuthService } from '@/lib/auth/AuthService';
 import { CategoryService } from '@/lib/services/CategoryService';
 import type { CreateCategoryInput, UpdateCategoryInput } from '@/lib/services/CategoryService';
 
+// 强制动态渲染
+export const dynamic = 'force-dynamic';
+
 const authService = new AuthService();
 const categoryService = new CategoryService();
 

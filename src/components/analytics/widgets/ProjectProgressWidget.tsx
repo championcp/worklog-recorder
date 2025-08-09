@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { List, Progress, Tag, Typography, Avatar, Space, Empty } from 'antd';
 import { 
   ExclamationCircleOutlined, 
@@ -27,11 +27,7 @@ export const ProjectProgressWidget: React.FC<ProjectProgressWidgetProps> = ({
   const { getDashboardData } = useAnalytics();
   const [data, setData] = useState<ProjectProgressData[]>([]);
 
-  useEffect(() => {
-    loadData();
-  }, [refreshKey]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       onLoading(true);
       onError(null);
@@ -48,7 +44,11 @@ export const ProjectProgressWidget: React.FC<ProjectProgressWidgetProps> = ({
     } finally {
       onLoading(false);
     }
-  };
+  }, [getDashboardData, config.filters?.timeRange, config.filters?.projectIds, onLoading, onError]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData, refreshKey]);
 
   // 获取状态配置
   const getStatusConfig = (status: string) => {

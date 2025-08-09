@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { List, Avatar, Typography, Tag, Empty, Tooltip } from 'antd';
 import { WidgetConfig, ActivityData } from '@/types/analytics';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -28,11 +28,7 @@ export const ActivityFeedWidget: React.FC<ActivityFeedWidgetProps> = ({
   const { getDashboardData } = useAnalytics();
   const [data, setData] = useState<ActivityData[]>([]);
 
-  useEffect(() => {
-    loadData();
-  }, [refreshKey]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       onLoading(true);
       onError(null);
@@ -51,7 +47,11 @@ export const ActivityFeedWidget: React.FC<ActivityFeedWidgetProps> = ({
     } finally {
       onLoading(false);
     }
-  };
+  }, [getDashboardData, config.filters?.timeRange, config.filters?.projectIds, config.filters?.maxItems, onLoading, onError]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData, refreshKey]);
 
   // 获取活动图标
   const getActivityIcon = (type: string) => {

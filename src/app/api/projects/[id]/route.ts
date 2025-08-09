@@ -3,6 +3,9 @@ import { AuthService } from '@/lib/auth/AuthService';
 import { ProjectService } from '@/lib/services/ProjectService';
 import type { ProjectApiResponse, UpdateProjectInput } from '@/types/project';
 
+// 强制动态渲染
+export const dynamic = 'force-dynamic';
+
 const authService = new AuthService();
 const projectService = new ProjectService();
 

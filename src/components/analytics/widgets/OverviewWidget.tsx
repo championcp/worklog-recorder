@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Row, Col, Statistic, Card, Progress, Typography } from 'antd';
 import { 
   ProjectOutlined, 
@@ -27,11 +27,7 @@ export const OverviewWidget: React.FC<OverviewWidgetProps> = ({
   const { getDashboardData } = useAnalytics();
   const [data, setData] = useState<any>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [refreshKey]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       onLoading(true);
       onError(null);
@@ -48,7 +44,11 @@ export const OverviewWidget: React.FC<OverviewWidgetProps> = ({
     } finally {
       onLoading(false);
     }
-  };
+  }, [getDashboardData, config.filters?.timeRange, config.filters?.projectIds, onLoading, onError]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData, refreshKey]);
 
   if (!data) {
     return <div style={{ padding: '20px', textAlign: 'center' }}>暂无数据</div>;

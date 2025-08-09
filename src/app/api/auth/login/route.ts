@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/auth/AuthService';
 import type { ApiResponse, LoginCredentials } from '@/types/auth';
 
+// 强制动态渲染
+export const dynamic = 'force-dynamic';
+
 const authService = new AuthService();
 
 export async function POST(request: NextRequest) {

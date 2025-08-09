@@ -454,10 +454,10 @@ export class AnalyticsService {
     return {
       totalHours: Math.round((totalHours?.hours || 0) * 10) / 10,
       averageDailyHours: Math.round(averageDailyHours * 10) / 10,
-      peakHours: peakHours.map((row: any) => row.hour),
+      peakHours: (peakHours || []).map((row: any) => row.hour),
       mostProductiveDay: productiveDay?.day_name || 'Monday',
       efficiencyScore,
-      recommendations: this.generateRecommendations(efficiencyScore, averageDailyHours, peakHours.length)
+      recommendations: this.generateRecommendations(efficiencyScore, averageDailyHours, (peakHours || []).length)
     };
   }
 
