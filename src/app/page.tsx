@@ -112,10 +112,10 @@ export default function HomePage() {
             </p>
             <div className="mt-4">
               <div className="bg-green-200 rounded-full h-2">
-                <div className="bg-green-600 h-2 rounded-full" style={{ width: '80%' }}></div>
+                <div className="bg-green-600 h-2 rounded-full" style={{ width: '95%' }}></div>
               </div>
               <p className="text-sm text-green-600 mt-2">
-                开发进度: 80% - Sprint 1-4完成，Sprint 5开发中
+                开发进度: 95% - Sprint 1-5完成，系统核心功能已就绪
               </p>
             </div>
           </div>

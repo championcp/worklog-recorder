@@ -65,7 +65,7 @@ describe('HomePage', () => {
     
     expect(screen.getByText('核心功能已完成')).toBeInTheDocument()
     expect(screen.getByText('认证系统、项目管理、WBS任务管理、时间记录和分类管理功能已实现并可正常使用')).toBeInTheDocument()
-    expect(screen.getByText('开发进度: 80% - Sprint 1-4完成，Sprint 5开发中')).toBeInTheDocument()
+    expect(screen.getByText('开发进度: 95% - Sprint 1-5完成，系统核心功能已就绪')).toBeInTheDocument()
   })
 
   it('makes auth check API call on mount', async () => {
