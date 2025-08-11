@@ -62,9 +62,7 @@ export const ReportHistoryManager: React.FC = () => {
 
   useEffect(() => {
     loadReports();
-  }, []);
-
-  useEffect(() => {
+    
     // 定期刷新处理中的任务
     const interval = setInterval(() => {
       const processingTasks = reports.filter(r => r.status === 'processing' || r.status === 'queued');
@@ -74,7 +72,7 @@ export const ReportHistoryManager: React.FC = () => {
     }, 5000);
     
     return () => clearInterval(interval);
-  }, [reports]);
+  }, []);
 
   const loadReports = async () => {
     try {
