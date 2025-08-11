@@ -1,0 +1,1506 @@
+openapi: 3.0.3
+info:
+  title: Nobody Logger API
+  description: |
+    Nobody Logger是一个基于WBS多层级时间管理和日志记录系统的RESTful API。
+    
+    ## 核心功能
+    - WBS多层级任务管理（年→半年→季度→月→周→日）
+    - 实时时间记录和统计分析
+    - 工作分类和标签系统
+    - 智能提醒系统
+    - 模板系统
+    - 自动报告生成
+    - 跨设备数据同步
+    
+    ## 认证方式
+    使用JWT Bearer Token进行认证：
+    ```
+    Authorization: Bearer <jwt_token>
+    ```
+  version: 1.0.0
+  contact:
+    name: Nobody Logger API Support
+    email: support@nobody-logger.com
+  license:
+    name: MIT License
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.nobody-logger.com/v1
+    description: 生产环境
+  - url: https://staging-api.nobody-logger.com/v1
+    description: 测试环境
+  - url: http://localhost:3000/v1
+    description: 开发环境
+
+security:
+  - BearerAuth: []
+
+paths:
+  # 认证相关
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: 用户注册
+      description: 创建新用户账户
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: 注册成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: 用户登录
+      description: 用户身份验证并获取访问令牌
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: 刷新Token
+      description: 使用当前Token获取新的访问令牌
+      responses:
+        '200':
+          description: Token刷新成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          token:
+                            type: string
+                          expires_at:
+                            type: string
+                            format: date-time
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: 用户注销
+      description: 注销当前用户会话
+      responses:
+        '204':
+          description: 注销成功
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # 用户管理
+  /users/me:
+    get:
+      tags: [Users]
+      summary: 获取当前用户信息
+      responses:
+        '200':
+          description: 用户信息获取成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      tags: [Users]
+      summary: 更新用户信息
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/me/settings:
+    get:
+      tags: [Users]
+      summary: 获取用户设置
+      responses:
+        '200':
+          description: 设置获取成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserSettings'
+
+    put:
+      tags: [Users]
+      summary: 更新用户设置
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSettings'
+      responses:
+        '200':
+          description: 设置更新成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserSettings'
+
+  # 项目管理
+  /projects:
+    get:
+      tags: [Projects]
+      summary: 获取项目列表
+      parameters:
+        - name: is_active
+          in: query
+          description: 过滤活跃项目
+          schema:
+            type: boolean
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        '200':
+          description: 项目列表获取成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PaginatedProjectList'
+
+    post:
+      tags: [Projects]
+      summary: 创建项目
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreateRequest'
+      responses:
+        '201':
+          description: 项目创建成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Project'
+
+  /projects/{projectId}:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    
+    get:
+      tags: [Projects]
+      summary: 获取项目详情
+      responses:
+        '200':
+          description: 项目详情获取成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Project'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Projects]
+      summary: 更新项目
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectUpdateRequest'
+      responses:
+        '200':
+          description: 项目更新成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Project'
+
+    delete:
+      tags: [Projects]
+      summary: 删除项目
+      responses:
+        '204':
+          description: 项目删除成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /projects/{projectId}/overview:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    
+    get:
+      tags: [Projects]
+      summary: 获取项目概览统计
+      responses:
+        '200':
+          description: 项目概览获取成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ProjectOverview'
+
+  # WBS任务管理
+  /projects/{projectId}/wbs:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    
+    get:
+      tags: [WBS Tasks]
+      summary: 获取WBS任务层级结构
+      parameters:
+        - name: level
+          in: query
+          description: 过滤层级
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 5
+        - name: level_type
+          in: query
+          description: 过滤层级类型
+          schema:
+            $ref: '#/components/schemas/LevelType'
+        - name: status
+          in: query
+          description: 过滤任务状态
+          schema:
+            $ref: '#/components/schemas/TaskStatus'
+        - name: include_deleted
+          in: query
+          description: 包含已删除任务
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: WBS层级结构获取成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          hierarchy:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/WBSTaskHierarchy'
+
+    post:
+      tags: [WBS Tasks]
+      summary: 创建WBS任务
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WBSTaskCreateRequest'
+      responses:
+        '201':
+          description: 任务创建成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/WBSTask'
+
+  /projects/{projectId}/wbs/{taskId}:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/TaskId'
+    
+    get:
+      tags: [WBS Tasks]
+      summary: 获取任务详情
+      parameters:
+        - name: include_children
+          in: query
+          description: 包含子任务
+          schema:
+            type: boolean
+            default: false
+        - name: include_time_logs
+          in: query
+          description: 包含时间记录
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: 任务详情获取成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/WBSTaskDetail'
+
+    put:
+      tags: [WBS Tasks]
+      summary: 更新任务
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WBSTaskUpdateRequest'
+      responses:
+        '200':
+          description: 任务更新成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/WBSTask'
+
+    delete:
+      tags: [WBS Tasks]
+      summary: 删除任务
+      responses:
+        '204':
+          description: 任务删除成功
+        '409':
+          description: 任务有子任务，无法删除
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # 时间记录
+  /time-logs:
+    get:
+      tags: [Time Logs]
+      summary: 获取时间日志列表
+      parameters:
+        - name: task_id
+          in: query
+          description: 任务ID
+          schema:
+            type: integer
+        - name: start_date
+          in: query
+          description: 开始日期
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          description: 结束日期
+          schema:
+            type: string
+            format: date
+        - name: is_manual
+          in: query
+          description: 是否手动记录
+          schema:
+            type: boolean
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: 时间日志列表获取成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PaginatedTimeLogList'
+
+    post:
+      tags: [Time Logs]
+      summary: 创建时间记录
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeLogCreateRequest'
+      responses:
+        '201':
+          description: 时间记录创建成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/TimeLog'
+
+  /time-logs/start:
+    post:
+      tags: [Time Logs]
+      summary: 开始计时
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartTimerRequest'
+      responses:
+        '201':
+          description: 计时开始成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/TimeLog'
+
+  /time-logs/{logId}/stop:
+    parameters:
+      - name: logId
+        in: path
+        required: true
+        description: 时间记录ID
+        schema:
+          type: integer
+    
+    post:
+      tags: [Time Logs]
+      summary: 停止计时
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StopTimerRequest'
+      responses:
+        '200':
+          description: 计时停止成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/TimeLog'
+
+  /time-logs/current:
+    get:
+      tags: [Time Logs]
+      summary: 获取当前计时状态
+      responses:
+        '200':
+          description: 当前计时状态获取成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        oneOf:
+                          - $ref: '#/components/schemas/TimeLog'
+                          - type: 'null'
+
+  # 数据同步
+  /sync/status:
+    get:
+      tags: [Sync]
+      summary: 获取同步状态
+      responses:
+        '200':
+          description: 同步状态获取成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SyncStatus'
+
+  /sync/push:
+    post:
+      tags: [Sync]
+      summary: 推送本地更改
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncPushRequest'
+      responses:
+        '200':
+          description: 更改推送成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SyncPushResponse'
+
+  /sync/pull:
+    get:
+      tags: [Sync]
+      summary: 拉取远程更改
+      parameters:
+        - name: since_version
+          in: query
+          description: 起始版本号
+          schema:
+            type: integer
+        - name: tables
+          in: query
+          description: 指定表名（逗号分隔）
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 远程更改拉取成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SyncPullResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      description: 项目ID
+      schema:
+        type: integer
+        minimum: 1
+
+    TaskId:
+      name: taskId
+      in: path
+      required: true
+      description: 任务ID
+      schema:
+        type: integer
+        minimum: 1
+
+    Page:
+      name: page
+      in: query
+      description: 页码
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    PerPage:
+      name: per_page
+      in: query
+      description: 每页数量
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+    Sort:
+      name: sort
+      in: query
+      description: 排序字段 (前缀 - 表示降序)
+      schema:
+        type: string
+        example: "-created_at"
+
+  responses:
+    BadRequest:
+      description: 请求参数错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: 未认证
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: 权限不足
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: 资源不存在
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Conflict:
+      description: 数据冲突
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    UnprocessableEntity:
+      description: 验证失败
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationErrorResponse'
+
+  schemas:
+    # 基础响应结构
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "操作成功"
+        timestamp:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+          format: uuid
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "RESOURCE_NOT_FOUND"
+            message:
+              type: string
+              example: "资源不存在"
+        timestamp:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+          format: uuid
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "VALIDATION_ERROR"
+            message:
+              type: string
+              example: "验证失败"
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  code:
+                    type: string
+                  message:
+                    type: string
+        timestamp:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+          format: uuid
+
+    # 分页结构
+    Pagination:
+      type: object
+      properties:
+        current_page:
+          type: integer
+          example: 1
+        per_page:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 100
+        total_pages:
+          type: integer
+          example: 5
+        has_next:
+          type: boolean
+          example: true
+        has_prev:
+          type: boolean
+          example: false
+
+    # 枚举类型
+    LevelType:
+      type: string
+      enum: [yearly, half_yearly, quarterly, monthly, weekly, daily]
+      description: 任务层级类型
+
+    TaskStatus:
+      type: string
+      enum: [not_started, in_progress, completed, paused, cancelled]
+      description: 任务状态
+
+    Priority:
+      type: string
+      enum: [low, medium, high, urgent]
+      description: 优先级
+
+    Mood:
+      type: string
+      enum: [excellent, good, normal, bad, terrible]
+      description: 工作心情
+
+    # 认证相关
+    RegisterRequest:
+      type: object
+      required: [email, password, username, device_id]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          minLength: 8
+          example: "password123"
+        username:
+          type: string
+          maxLength: 100
+          example: "用户名"
+        device_id:
+          type: string
+          example: "device-uuid-string"
+
+    LoginRequest:
+      type: object
+      required: [email, password, device_id]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        device_id:
+          type: string
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        expires_at:
+          type: string
+          format: date-time
+
+    # 用户相关
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 123
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        last_login_at:
+          type: string
+          format: date-time
+        sync_version:
+          type: integer
+
+    UserUpdateRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          maxLength: 100
+        password:
+          type: string
+          minLength: 8
+
+    UserSettings:
+      type: object
+      properties:
+        theme:
+          type: string
+          enum: [light, dark, auto]
+          default: light
+        language:
+          type: string
+          default: "zh-CN"
+        timezone:
+          type: string
+          default: "Asia/Shanghai"
+        notifications_enabled:
+          type: boolean
+          default: true
+        auto_sync_enabled:
+          type: boolean
+          default: true
+        work_hours_start:
+          type: string
+          format: time
+          default: "09:00"
+        work_hours_end:
+          type: string
+          format: time
+          default: "18:00"
+
+    # 项目相关
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        color:
+          type: string
+          pattern: "^#[0-9A-Fa-f]{6}$"
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        sync_version:
+          type: integer
+
+    ProjectCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        color:
+          type: string
+          pattern: "^#[0-9A-Fa-f]{6}$"
+          default: "#1976d2"
+
+    ProjectUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        color:
+          type: string
+          pattern: "^#[0-9A-Fa-f]{6}$"
+        is_active:
+          type: boolean
+
+    PaginatedProjectList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    ProjectOverview:
+      type: object
+      properties:
+        project_id:
+          type: integer
+        project_name:
+          type: string
+        total_tasks:
+          type: integer
+        completed_tasks:
+          type: integer
+        in_progress_tasks:
+          type: integer
+        avg_progress:
+          type: number
+          format: float
+        total_estimated_hours:
+          type: number
+          format: float
+        total_actual_hours:
+          type: number
+          format: float
+
+    # WBS任务相关
+    WBSTask:
+      type: object
+      properties:
+        id:
+          type: integer
+        project_id:
+          type: integer
+        parent_id:
+          type: integer
+          nullable: true
+        wbs_code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        level:
+          type: integer
+          minimum: 0
+          maximum: 5
+        level_type:
+          $ref: '#/components/schemas/LevelType'
+        sort_order:
+          type: integer
+        start_date:
+          type: string
+          format: date
+          nullable: true
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        estimated_hours:
+          type: number
+          format: float
+          nullable: true
+        actual_hours:
+          type: number
+          format: float
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        progress_percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+        priority:
+          $ref: '#/components/schemas/Priority'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        sync_version:
+          type: integer
+
+    WBSTaskHierarchy:
+      allOf:
+        - $ref: '#/components/schemas/WBSTask'
+        - type: object
+          properties:
+            children:
+              type: array
+              items:
+                $ref: '#/components/schemas/WBSTaskHierarchy'
+
+    WBSTaskDetail:
+      allOf:
+        - $ref: '#/components/schemas/WBSTask'
+        - type: object
+          properties:
+            categories:
+              type: array
+              items:
+                $ref: '#/components/schemas/Category'
+            tags:
+              type: array
+              items:
+                $ref: '#/components/schemas/Tag'
+            children:
+              type: array
+              items:
+                $ref: '#/components/schemas/WBSTask'
+            time_logs:
+              type: array
+              items:
+                $ref: '#/components/schemas/TimeLog'
+
+    WBSTaskCreateRequest:
+      type: object
+      required: [name, level_type]
+      properties:
+        parent_id:
+          type: integer
+          nullable: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        level_type:
+          $ref: '#/components/schemas/LevelType'
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        estimated_hours:
+          type: number
+          format: float
+          minimum: 0
+        priority:
+          $ref: '#/components/schemas/Priority'
+        category_ids:
+          type: array
+          items:
+            type: integer
+        tag_ids:
+          type: array
+          items:
+            type: integer
+
+    WBSTaskUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        progress_percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+        actual_hours:
+          type: number
+          format: float
+          minimum: 0
+        priority:
+          $ref: '#/components/schemas/Priority'
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        category_ids:
+          type: array
+          items:
+            type: integer
+        tag_ids:
+          type: array
+          items:
+            type: integer
+
+    # 分类和标签
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        parent_id:
+          type: integer
+          nullable: true
+        name:
+          type: string
+        description:
+          type: string
+        color:
+          type: string
+          pattern: "^#[0-9A-Fa-f]{6}$"
+        icon:
+          type: string
+        sort_order:
+          type: integer
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Tag:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        name:
+          type: string
+        color:
+          type: string
+          pattern: "^#[0-9A-Fa-f]{6}$"
+        usage_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # 时间记录
+    TimeLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        task_id:
+          type: integer
+        description:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
+        duration_seconds:
+          type: integer
+          nullable: true
+        is_manual:
+          type: boolean
+        log_date:
+          type: string
+          format: date
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        task:
+          $ref: '#/components/schemas/WBSTask'
+
+    TimeLogCreateRequest:
+      type: object
+      required: [task_id, start_time]
+      properties:
+        task_id:
+          type: integer
+        description:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        is_manual:
+          type: boolean
+          default: true
+
+    StartTimerRequest:
+      type: object
+      required: [task_id]
+      properties:
+        task_id:
+          type: integer
+        description:
+          type: string
+
+    StopTimerRequest:
+      type: object
+      properties:
+        end_time:
+          type: string
+          format: date-time
+        description:
+          type: string
+
+    PaginatedTimeLogList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeLog'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # 数据同步
+    SyncStatus:
+      type: object
+      properties:
+        last_sync_at:
+          type: string
+          format: date-time
+          nullable: true
+        sync_version:
+          type: integer
+        pending_changes:
+          type: integer
+        conflicts:
+          type: integer
+        device_id:
+          type: string
+
+    SyncChange:
+      type: object
+      properties:
+        table:
+          type: string
+        operation:
+          type: string
+          enum: [create, update, delete]
+        record_id:
+          type: integer
+        data:
+          type: object
+        local_timestamp:
+          type: string
+          format: date-time
+        sync_version:
+          type: integer
+
+    SyncPushRequest:
+      type: object
+      required: [device_id, changes]
+      properties:
+        device_id:
+          type: string
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncChange'
+
+    SyncPushResponse:
+      type: object
+      properties:
+        processed_count:
+          type: integer
+        success_count:
+          type: integer
+        conflict_count:
+          type: integer
+        conflicts:
+          type: array
+          items:
+            type: object
+            properties:
+              change_index:
+                type: integer
+              conflict_id:
+                type: integer
+              local_data:
+                type: object
+              remote_data:
+                type: object
+        new_sync_version:
+          type: integer
+
+    SyncPullResponse:
+      type: object
+      properties:
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncChange'
+        current_sync_version:
+          type: integer
+        has_more:
+          type: boolean
+
+tags:
+  - name: Authentication
+    description: 用户认证相关接口
+  - name: Users
+    description: 用户管理接口
+  - name: Projects
+    description: 项目管理接口
+  - name: WBS Tasks
+    description: WBS任务管理接口
+  - name: Categories
+    description: 分类管理接口
+  - name: Tags
+    description: 标签管理接口
+  - name: Time Logs
+    description: 时间记录接口
+  - name: Work Logs
+    description: 工作日志接口
+  - name: Templates
+    description: 模板系统接口
+  - name: Reminders
+    description: 提醒系统接口
+  - name: Reports
+    description: 报告系统接口
+  - name: Statistics
+    description: 统计分析接口
+  - name: Sync
+    description: 数据同步接口
+  - name: Search
+    description: 搜索接口
