@@ -479,24 +479,24 @@ function DashboardOverview({ user, onNavigateToProjects, onNavigateToTimeTrackin
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-700">数据分析系统</span>
-            <span className="text-sm text-orange-600 font-medium">🔄 开发中</span>
+            <span className="text-sm text-green-600 font-medium">✓ 已完成</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-700">报告生成功能</span>
-            <span className="text-sm text-orange-600 font-medium">🔄 开发中</span>
+            <span className="text-sm text-green-600 font-medium">✓ 已完成</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-700">团队协作功能</span>
-            <span className="text-sm text-orange-600 font-medium">🔄 开发中</span>
+            <span className="text-sm text-green-600 font-medium">✓ 已完成</span>
           </div>
         </div>
         
         <div className="mt-4">
           <div className="bg-gray-200 rounded-full h-2">
-            <div className="bg-gradient-to-r from-green-600 to-green-500 h-2 rounded-full" style={{ width: '80%' }}></div>
+            <div className="bg-gradient-to-r from-green-600 to-green-500 h-2 rounded-full" style={{ width: '95%' }}></div>
           </div>
           <p className="text-sm text-gray-600 mt-2">
-            总体进度: 80% - Sprint 1-4完成，Sprint 5开发中
+            总体进度: 95% - Sprint 1-5完成，系统核心功能已就绪
           </p>
         </div>
       </div>
