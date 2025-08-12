@@ -19,8 +19,6 @@ dist/
 # Database files
 *.sqlite
 *.db
-*.db-*
-data/
 server/data/
 test/test-management-system/test_management.db
 
