@@ -65,7 +65,6 @@ const sessionStorageMock = {
 }
 global.sessionStorage = sessionStorageMock
 
-// Mock window.location
 delete window.location;
 window.location = {
   assign: jest.fn(),

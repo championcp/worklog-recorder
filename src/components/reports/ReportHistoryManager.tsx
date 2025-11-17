@@ -60,21 +60,7 @@ export const ReportHistoryManager: React.FC = () => {
     dateRange: null as [dayjs.Dayjs, dayjs.Dayjs] | null
   });
 
-  useEffect(() => {
-    loadReports();
-    
-    // 定期刷新处理中的任务
-    const interval = setInterval(() => {
-      const processingTasks = reports.filter(r => r.status === 'processing' || r.status === 'queued');
-      if (processingTasks.length > 0) {
-        loadReports();
-      }
-    }, 5000);
-    
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadReports = async () => {
+  const loadReports = React.useCallback(async () => {
     try {
       setLoading(true);
       
@@ -153,7 +139,18 @@ export const ReportHistoryManager: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadReports();
+    const interval = setInterval(() => {
+      const processingTasks = reports.filter(r => r.status === 'processing' || r.status === 'queued');
+      if (processingTasks.length > 0) {
+        loadReports();
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [reports, loadReports]);
 
   const handleDownload = (report: ReportHistory) => {
     if (report.downloadUrl) {
