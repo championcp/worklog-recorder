@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ TRAE3 ]
+
+jobs:
+  validate:
+    name: Validate Branch Naming
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch name prefix
+        run: |
+          echo "Branch: ${{ github.head_ref }}"
+          if [[ "${{ github.head_ref }}" != TRAE3-* ]]; then
+            echo "分支命名必须以 'TRAE3-' 开头"
+            exit 1
+          fi
+
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run tests (CI)
+        run: npm run test:ci
+      - name: Build (includes lint & type check)
+        run: npm run build
+      - name: Coverage report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/**
+      - name: Security audit (report only)
+        run: |
+          npm audit --audit-level=critical || true
+
+  sonar-quality-gate:
+    name: SonarQube Quality Gate
+    runs-on: ubuntu-latest
+    if: ${{ secrets.SONAR_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run tests with coverage
+        run: npm run test:ci
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@v2.0.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >-
+            -Dsonar.projectKey=nobody-logger
+            -Dsonar.sources=src
+            -Dsonar.tests=src
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+      - name: Quality Gate
+        uses: sonarsource/sonarqube-quality-gate-action@v1.1.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
