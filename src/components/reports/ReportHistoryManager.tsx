@@ -63,76 +63,35 @@ export const ReportHistoryManager: React.FC = () => {
   const loadReports = React.useCallback(async () => {
     try {
       setLoading(true);
-      
-      // TODO: 实现真实的API调用
-      // const response = await fetch('/api/reports/history');
-      // const result = await response.json();
-      
-      // 模拟数据
-      const mockReports: ReportHistory[] = [
-        {
-          taskId: 'task_001',
-          title: '项目进度报告 - 2025年8月',
-          type: 'pdf',
-          status: 'completed',
-          fileSize: 1024 * 1024 * 2.3,
-          downloadUrl: '/api/reports/download/task_001.pdf',
-          downloadCount: 5,
-          createdAt: '2025-08-06T09:00:00Z',
-          completedAt: '2025-08-06T09:02:15Z',
-          expiresAt: '2025-09-06T09:00:00Z',
-          templateName: '项目进度报告',
-          createdBy: '张三'
-        },
-        {
-          taskId: 'task_002',
-          title: '时间分析报告 - 第31周',
-          type: 'excel',
-          status: 'processing',
-          progress: 65,
+      const response = await fetch('/api/reports/history');
+      const result = await response.json();
+      const apiReports = (result?.data?.reports || []) as Array<any>;
+      const mapped: ReportHistory[] = apiReports.map((r: any) => {
+        const sizeToBytes = (s: string | null) => {
+          if (!s || typeof s !== 'string') return undefined;
+          const m = s.match(/([\d.]+)\s*(KB|MB|GB)/i);
+          if (!m) return undefined;
+          const val = parseFloat(m[1]);
+          const unit = m[2].toUpperCase();
+          const k = 1024;
+          const mult = unit === 'KB' ? 1 : unit === 'MB' ? k : k * k;
+          return Math.round(val * 1024 * mult);
+        };
+        return {
+          taskId: r.id,
+          title: r.name,
+          type: (r.format || 'pdf') as 'pdf' | 'excel' | 'html',
+          status: r.status,
+          fileSize: sizeToBytes(r.size ?? null),
+          downloadUrl: r.downloadUrl ?? undefined,
           downloadCount: 0,
-          createdAt: '2025-08-06T10:30:00Z',
-          templateName: '时间分析报告',
-          createdBy: '李四'
-        },
-        {
-          taskId: 'task_003',
-          title: '团队协作报告 - Q3季度',
-          type: 'pdf',
-          status: 'failed',
-          downloadCount: 0,
-          createdAt: '2025-08-06T08:15:00Z',
-          errorMessage: '数据源连接超时',
-          templateName: '团队协作报告',
-          createdBy: '王五'
-        },
-        {
-          taskId: 'task_004',
-          title: '自定义数据导出',
-          type: 'html',
-          status: 'completed',
-          fileSize: 1024 * 512,
-          downloadUrl: '/api/reports/download/task_004.html',
-          downloadCount: 2,
-          createdAt: '2025-08-05T16:45:00Z',
-          completedAt: '2025-08-05T16:46:30Z',
-          expiresAt: '2025-09-05T16:45:00Z',
-          templateName: '自定义模板',
-          createdBy: '张三'
-        },
-        {
-          taskId: 'task_005',
-          title: '项目进度报告 - 7月总结',
-          type: 'pdf',
-          status: 'queued',
-          downloadCount: 0,
-          createdAt: '2025-08-06T11:00:00Z',
-          templateName: '项目进度报告',
-          createdBy: '赵六'
-        }
-      ];
-      
-      setReports(mockReports);
+          createdAt: r.generatedAt,
+          errorMessage: r.error ?? undefined,
+          templateName: r.type,
+          createdBy: '系统'
+        };
+      });
+      setReports(mapped);
     } catch (error) {
       console.error('加载报告历史失败:', error);
       message.error('加载报告历史失败');
@@ -181,7 +140,11 @@ export const ReportHistoryManager: React.FC = () => {
       cancelText: '取消',
       onOk: async () => {
         try {
-          // TODO: 实现删除API
+          const res = await fetch(`/api/reports/history?id=${encodeURIComponent(report.taskId)}`, { method: 'DELETE' });
+          const json = await res.json();
+          if (!json?.success) {
+            throw new Error(json?.message || '删除失败');
+          }
           setReports(prev => prev.filter(r => r.taskId !== report.taskId));
           message.success('报告已删除');
         } catch (error) {

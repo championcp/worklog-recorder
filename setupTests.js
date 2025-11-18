@@ -65,21 +65,9 @@ const sessionStorageMock = {
 }
 global.sessionStorage = sessionStorageMock
 
-delete window.location;
-window.location = {
-  assign: jest.fn(),
-  reload: jest.fn(),
-  replace: jest.fn(),
-  href: 'http://localhost:3000',
-  origin: 'http://localhost:3000',
-  protocol: 'http:',
-  host: 'localhost:3000',
-  hostname: 'localhost',
-  port: '3000',
-  pathname: '/',
-  search: '',
-  hash: '',
-};
+// 注意：不要重写 window.location 对象本身，jsdom 对导航的实现有限，会产生告警。
+// 如需在测试中断言导航行为，请使用路由/导航的 mock（已在上方对 next/router 与 next/navigation 进行了 mock）。
+// 若确实需要调用 reload/assign/replace，可在具体测试中使用 jest.spyOn(window.location, 'reload') 等方式。
 
 // Mock IntersectionObserver
 global.IntersectionObserver = jest.fn().mockImplementation(() => ({
@@ -110,14 +98,17 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
-// Suppress console errors during tests (optional)
+// Suppress specific console errors during tests（去除无关告警输出）
 const originalError = console.error
 beforeAll(() => {
   console.error = (...args) => {
-    if (
-      typeof args[0] === 'string' &&
-      args[0].includes('Warning: ReactDOM.render is no longer supported')
-    ) {
+    const msg = typeof args[0] === 'string' ? args[0] : ''
+    // 过滤 React 旧 API 告警
+    if (msg.includes('Warning: ReactDOM.render is no longer supported')) {
+      return
+    }
+    // 过滤 jsdom 导航未实现告警（不影响测试断言）
+    if (msg.includes('Not implemented: navigation')) {
       return
     }
     originalError.call(console, ...args)
