@@ -1,0 +1,143 @@
+name: Bug Report
+description: 提交系统缺陷（标准化模板）
+labels:
+  - bug
+title: "[Bug] <简要标题>"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请严格按照模板填写，确保缺陷可复现、影响范围明确并可量化评估。
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: 复现步骤（Step-by-Step）
+      description: 包含前置条件与测试数据准备；使用编号列出每一步操作。
+      placeholder: |
+        前置条件：已注册用户，数据库存在项目X...
+        测试数据：用户 test@nobody-logger.com / 123456
+        步骤：
+        1. 打开 http://localhost:3000/login 并登录
+        2. 进入仪表板，点击“时间记录”
+        3. 执行...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-actual
+    attributes:
+      label: 预期行为 vs 实际行为（需量化）
+      description: 明确预期与实际差异，并给出可度量指标（如耗时、错误率、渲染帧数、返回码等）。
+      placeholder: |
+        预期：创建任务耗时 < 200ms，返回 200；界面显示新任务条目
+        实际：耗时 ~1200ms，偶发 500；界面不刷新
+        差异指标：响应时间 +1000ms，错误率 20%
+    validations:
+      required: true
+
+  - type: input
+    id: environment-os
+    attributes:
+      label: 操作系统版本
+      placeholder: macOS 14.6 / Windows 11 23H2 / Ubuntu 22.04
+    validations:
+      required: true
+
+  - type: input
+    id: environment-browser
+    attributes:
+      label: 浏览器及版本
+      placeholder: Chrome 130 / Safari 17 / Firefox 130 / Edge 130
+    validations:
+      required: true
+
+  - type: input
+    id: environment-device
+    attributes:
+      label: 设备型号（如适用）
+      placeholder: MacBook Pro 14" (M3) / iPhone 15 / ThinkPad T14
+
+  - type: textarea
+    id: logs-screenshots
+    attributes:
+      label: 错误截图/日志/录屏（标注关键时间点）
+      description: 可粘贴链接或简要日志；录屏需在关键步骤处打点说明。
+      placeholder: |
+        截图链接：...
+        日志片段：...
+
+  - type: dropdown
+    id: component-tags
+    attributes:
+      label: 关联模块/组件标签
+      description: 选择受影响的模块；如不在列表，请在下方补充。
+      options:
+        - Auth
+        - Projects
+        - WBS Tasks
+        - Time Logs
+        - Categories/Tags
+        - Analytics
+        - Reports
+        - Team Collaboration
+        - API Routes
+        - UI/UX
+        - Database
+        - Security
+      multiple: true
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact-analysis
+    attributes:
+      label: 初步影响分析
+      description: 说明影响的用户范围、业务流程、数据风险等。
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 预估优先级（Triage前）
+      options:
+        - P0 紧急
+        - P1 高
+        - P2 中
+        - P3 低
+    validations:
+      required: true
+
+  - type: input
+    id: estimate-days
+    attributes:
+      label: 预估工时（0.5天为单位）
+      placeholder: 1 / 1.5 / 2
+
+  - type: dropdown
+    id: tech-complexity
+    attributes:
+      label: 技术复杂度（1-5）
+      options:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+
+  - type: dropdown
+    id: business-impact
+    attributes:
+      label: 业务影响度（1-5）
+      options:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+
+  - type: textarea
+    id: additional-notes
+    attributes:
+      label: 其他说明
+      description: 兼容性/性能/安全相关补充、回归风险、依赖项等。
+

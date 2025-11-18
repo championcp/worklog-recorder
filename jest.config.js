@@ -42,6 +42,32 @@ const customJestConfig = {
     '!src/**/*.stories.{js,jsx,ts,tsx}',
     '!src/**/*.config.{js,ts}',
   ],
+
+  // Coverage开关与阈值（仅在ENFORCE_COVERAGE=true时启用）
+  collectCoverage: process.env.ENFORCE_COVERAGE === 'true',
+  coverageThreshold:
+    process.env.ENFORCE_COVERAGE === 'true'
+      ? {
+          global: {
+            branches: 80,
+            functions: 80,
+            lines: 80,
+            statements: 80,
+          },
+          './src/lib/services/': {
+            branches: 90,
+            functions: 90,
+            lines: 90,
+            statements: 90,
+          },
+          './src/app/api/': {
+            branches: 90,
+            functions: 90,
+            lines: 90,
+            statements: 90,
+          },
+        }
+      : undefined,
   
   // Test file patterns
   testMatch: [
